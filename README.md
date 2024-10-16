@@ -1,4 +1,4 @@
-# Blogging Platform Using Spring Microservices
+![image](https://github.com/user-attachments/assets/89138d97-084e-4ca9-9757-2112bec0570f)# Blogging Platform REST APIs Using Spring Microservices
   RESTful API for Users that allows them to register/login in this and then to post, read, edit, and delete their blogs.
 
 ## Features:
@@ -9,7 +9,7 @@
  * Fetching application.properties for CONFIG-SERVICE, USER-SERVICE, BLOG-SERVICE from SQL DB, properties table.
  * USER-SERVICE stores users info in SQL DB, users table.
  * BLOG-SERVICE stores blogs info in NoSQL DB, blogs collection.
- * Each microservice running on different ports, other than discovery service all others microservices registry could be visible in eureka when they're up and running.
+ * Each microservice running on different ports, other than discovery service all others microservices could be visible in eureka service registry when they're up and running.
  * Provided clear and comprehensive API documentation using tools like Swagger or OpenAPI.
 
 ## Tech Stack Used:
@@ -28,6 +28,10 @@
 ![Blog](https://github.com/user-attachments/assets/5a844349-86d5-40ac-b8f5-d5bef10a276b)
 ![Users](https://github.com/user-attachments/assets/948419d8-7295-45d0-bee1-09c06d0ea889)
 ![Blogs](https://github.com/user-attachments/assets/4f189187-efd6-422a-b169-d630cee94018)
+![Auth1](https://github.com/user-attachments/assets/ba44e285-94e1-4465-be67-2d2620f574ed)
+![Auth2](https://github.com/user-attachments/assets/fd1968f8-734a-4620-a48c-73662339a02b)
+
+
 
 
 
