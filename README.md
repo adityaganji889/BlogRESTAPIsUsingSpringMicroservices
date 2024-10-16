@@ -1,4 +1,4 @@
-![image](https://github.com/user-attachments/assets/89138d97-084e-4ca9-9757-2112bec0570f)# Blogging Platform REST APIs Using Spring Microservices
+# Blogging Platform REST APIs Using Spring Microservices
   RESTful API for Users that allows them to register/login in this and then to post, read, edit, and delete their blogs.
 
 ## Features:
