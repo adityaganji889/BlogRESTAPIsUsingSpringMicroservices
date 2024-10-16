@@ -9,7 +9,7 @@
  * Fetching application.properties for CONFIG-SERVICE, USER-SERVICE, BLOG-SERVICE from SQL DB, properties table.
  * USER-SERVICE stores users info in SQL DB, users table.
  * BLOG-SERVICE stores blogs info in NoSQL DB, blogs collection.
- * Each microservice running on different ports, other than discovery service all others microservices registery could be visible in eureka when they're up and running.
+ * Each microservice running on different ports, other than discovery service all others microservices registry could be visible in eureka when they're up and running.
  * Provided clear and comprehensive API documentation using tools like Swagger or OpenAPI.
 
 ## Tech Stack Used:
