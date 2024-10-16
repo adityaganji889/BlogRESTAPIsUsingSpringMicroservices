@@ -1,0 +1,5 @@
+spring:
+  config:
+    import: optional:configserver:http://localhost:8083/USER-SERVICE/user/default
+  profiles:
+    active: user

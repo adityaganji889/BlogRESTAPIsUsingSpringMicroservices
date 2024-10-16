@@ -1,0 +1,40 @@
+package com.services.ConfigService.config;
+
+import org.springframework.cloud.config.environment.Environment;
+import org.springframework.cloud.config.server.environment.JdbcEnvironmentRepository;
+import org.springframework.cloud.config.environment.PropertySource;
+import org.springframework.jdbc.core.JdbcTemplate;
+
+import com.services.ConfigService.entities.ConfigProperty;
+import com.services.ConfigService.services.PropertyService;
+
+import org.springframework.cloud.config.server.environment.JdbcEnvironmentProperties;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class CustomJdbcEnvironmentRepository extends JdbcEnvironmentRepository {
+
+    private final PropertyService propertyService;
+
+    public CustomJdbcEnvironmentRepository(JdbcTemplate jdbcTemplate, JdbcEnvironmentProperties properties, PropertyService propertyService) {
+        super(jdbcTemplate, properties);
+        this.propertyService = propertyService;
+    }
+
+    @Override
+    public Environment findOne(String application, String profile, String label) {
+        // Fetch properties from PropertyService
+        List<ConfigProperty> properties = propertyService.getAllProperties(application, profile, label);
+        List<PropertySource> propertySources = new ArrayList<>();
+
+        // Populate property sources with actual key-value pairs
+        for (ConfigProperty property : properties) {
+            propertySources.add(new PropertySource(property.getApplication(), property.getValue()));
+        }
+
+        // Create the new Environment object using the new constructor
+        return new Environment(application, profile, label, propertySources);
+    }
+}
+

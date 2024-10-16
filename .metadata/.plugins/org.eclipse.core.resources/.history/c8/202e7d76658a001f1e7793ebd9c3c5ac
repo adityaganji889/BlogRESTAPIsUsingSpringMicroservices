@@ -1,0 +1,20 @@
+package com.services.UserService.controllers;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.services.UserService.services.UserService;
+import com.services.UserService.utils.JwtUtil;
+
+@RestController
+@RequestMapping("/api/userProfile")
+public class UserProfileController {
+
+	@Autowired
+    private UserService userService;
+
+    @Autowired
+    private JwtUtil jwtUtil;
+	
+}

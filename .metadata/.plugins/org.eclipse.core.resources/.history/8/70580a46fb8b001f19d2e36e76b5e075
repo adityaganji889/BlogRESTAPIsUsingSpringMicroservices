@@ -1,0 +1,32 @@
+package com.services.APIGateway.config;
+
+import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+import io.swagger.v3.oas.annotations.info.Contact;
+import io.swagger.v3.oas.annotations.info.Info;
+import io.swagger.v3.oas.annotations.info.License;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.servers.Server;
+
+@OpenAPIDefinition(
+		  info = @Info(
+			  contact = @Contact (
+				  name = "Aditya Ganji",
+				  email = "adityaganji889@gmail.com"
+				),
+			  description = "OpenApi documentation for API Gateway Microservice",
+			  title="API Gateway Microservice REST API Documentation",
+		      license = @License (
+		    	   name = "Licensed By Aditya Ganji"
+		      ),
+			  termsOfService = "Terms of service"
+			),
+		    servers = {
+		    	@Server(
+		    		description = "Local Env",
+		    		url = "http://localhost:9090"
+		    	)// similar add another entry of Server for Prod Env.	
+		    }
+		)
+public class OpenAPIConfig {
+
+}

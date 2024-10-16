@@ -1,0 +1,22 @@
+package com.services.BlogService.services;
+
+import java.util.List;
+
+import com.services.BlogService.dtos.BlogRequestDTO;
+import com.services.BlogService.entities.Blog;
+
+public interface BlogService {
+
+    List<Blog> getAllBlogs();
+    
+    List<Blog> getAllBlogsOfAuthor(Long authorId);
+    
+    Blog getBlogById(String id);
+    
+    void createBlog(BlogRequestDTO blogRequest);
+    
+    Blog updateBlog(BlogRequestDTO blogRequest, String id);
+    
+    void deleteBlog(String id);
+	
+}

@@ -1,0 +1,26 @@
+package com.services.ConfigService.controllers;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import com.services.ConfigService.services.ConfigService;
+
+import java.util.Map;
+
+@RestController
+@RequestMapping("/config")
+public class ConfigController {
+
+    @Autowired
+    private ConfigService configService;
+
+    @GetMapping("/{key}")
+    public String getConfig(@PathVariable String key) {
+        return configService.getProperty(key);
+    }
+
+    @GetMapping
+    public Map<String, String> getAllConfigs() {
+        return configService.getAllProperties();
+    }
+}

@@ -1,0 +1,41 @@
+package com.services.APIGateway.config;
+
+import org.springframework.cloud.gateway.filter.GatewayFilter;
+import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
+import org.springframework.http.HttpHeaders;
+import org.springframework.stereotype.Component;
+import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Mono;
+
+@Component
+public class JwtHeaderFilter extends AbstractGatewayFilterFactory<JwtHeaderFilter.Config> {
+
+    public JwtHeaderFilter() {
+        super(Config.class);
+    }
+
+    public static class Config {
+        // You can add configuration properties here if needed
+    }
+
+    @Override
+    public GatewayFilter apply(Config config) {
+        return (exchange, chain) -> {
+            String jwtToken = exchange.getRequest().getHeaders().getFirst("Authorization");
+
+            // You might want to check if jwtToken is not null or empty
+            if (jwtToken != null) {
+                // Forward the token in the headers of the downstream request
+                return chain.filter(
+                        exchange.mutate()
+                                .request(exchange.getRequest().mutate()
+                                        .header(HttpHeaders.AUTHORIZATION, jwtToken)
+                                        .build())
+                                .build()
+                );
+            }
+
+            return chain.filter(exchange);
+        };
+    }
+}

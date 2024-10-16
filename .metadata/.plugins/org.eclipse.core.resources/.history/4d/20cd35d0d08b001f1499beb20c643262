@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: USER-SERVICE
+  config:
+   import: lb://CONFIG-SERVICE/user/default
+  profiles:
+    active: user

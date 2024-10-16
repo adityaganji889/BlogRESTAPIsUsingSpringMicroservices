@@ -1,0 +1,26 @@
+package com.services.BlogService.config;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
+public class JwtRequestFilter extends OncePerRequestFilter {
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
+            throws ServletException, IOException {
+        final String authorizationHeader = request.getHeader("Authorization");
+
+        // Check if the Authorization header is present and starts with "Bearer "
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
+            return;
+        }
+
+        // Token is present; proceed to the next filter in the chain
+        chain.doFilter(request, response);
+    }
+}

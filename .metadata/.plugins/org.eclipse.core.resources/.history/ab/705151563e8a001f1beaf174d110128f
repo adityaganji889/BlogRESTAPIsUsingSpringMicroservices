@@ -1,0 +1,5 @@
+package com.services.APIGateway.config;
+
+public class WebClientConfig {
+
+}

@@ -1,0 +1,9 @@
+package com.services.BlogService.dtos;
+
+public class BlogResponse {
+
+	private String id;
+	private String title;
+	private String content;
+	
+}

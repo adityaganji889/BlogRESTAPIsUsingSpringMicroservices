@@ -1,0 +1,17 @@
+package com.services.APIGateway.dtos;
+
+import jakarta.annotation.Nonnull;
+import lombok.Data;
+
+
+@Data
+@NoArgsConstructor
+public class UserRegistrationRequest {
+    private String username;
+    private String password;
+
+    @Nonnull
+    private String role; // Use Role enum as a String for simplicity
+
+    // Getters and Setters
+}

@@ -1,0 +1,76 @@
+package com.services.APIGateway.controllers;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+
+import com.services.APIGateway.dtos.LoggedInResponse;
+import com.services.APIGateway.dtos.LoginRequest;
+import com.services.APIGateway.dtos.RegisteredResponse;
+import com.services.APIGateway.dtos.RegistrationRequestDTO;
+import com.services.APIGateway.dtos.Role;
+import com.services.APIGateway.dtos.UserRegistrationRequest;
+import com.services.APIGateway.services.TokenStore;
+
+import reactor.core.publisher.Mono;
+
+@RestController
+@RequestMapping("/api/auth")
+public class AuthController {
+
+    @Autowired
+    private WebClient.Builder webClientBuilder;
+    
+    @Autowired
+    private RestTemplate restTemplate;
+    
+    @Autowired
+    private TokenStore tokenStore;
+
+    @PostMapping("/login")
+    public ResponseEntity<LoggedInResponse> login(@RequestBody LoginRequest request) {
+    	
+    	String url = "http://USER-SERVICE/api/users/authenticate";
+    	
+    	LoggedInResponse loggedInResponse = restTemplate.postForObject(url, request, LoggedInResponse.class);
+        
+    	
+    	tokenStore.storeToken(loggedInResponse.getUsername(),loggedInResponse.getToken());
+    	
+    	return new ResponseEntity<LoggedInResponse>(loggedInResponse,HttpStatus.OK);
+        
+        
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<RegisteredResponse> register(@RequestBody UserRegistrationRequest request) {
+        
+    	System.out.println("request:"+ request);
+    	
+    	RegistrationRequestDTO newRequest = new RegistrationRequestDTO();
+    	
+    	newRequest.setUsername(request.getUsername());
+    	newRequest.setPassword(request.getPassword());
+    	if ("USER".equals(request.getRole())) {
+    	    newRequest.setRole(Role.USER);
+    	} else {
+    	    newRequest.setRole(Role.ADMIN);
+    	}
+    	
+    	 String url = "http://USER-SERVICE/api/users/register";
+    	 RegisteredResponse registeredResponse = restTemplate.postForObject(url, newRequest, RegisteredResponse.class);
+
+    	 return new ResponseEntity<RegisteredResponse>(registeredResponse,HttpStatus.OK);
+    }
+    
+    
+    @PostMapping("/logout")
+    
+}

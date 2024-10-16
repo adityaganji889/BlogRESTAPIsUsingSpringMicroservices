@@ -1,0 +1,8 @@
+package com.services.APIGateway.dtos;
+
+public class LoginRequest {
+    private String username;
+    private String password;
+
+    // Getters and Setters
+}

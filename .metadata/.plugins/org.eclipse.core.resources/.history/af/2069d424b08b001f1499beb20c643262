@@ -1,0 +1,9 @@
+package com.services.ConfigService.repositories;
+
+import org.springframework.data.jpa.repository.*;
+
+
+public interface PropertyRepository extends JpaRepository<ConfigProperty,Long> {
+
+	
+}

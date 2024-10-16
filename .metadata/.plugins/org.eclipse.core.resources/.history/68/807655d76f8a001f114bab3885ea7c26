@@ -1,0 +1,5 @@
+package com.services.APIGateway.dtos;
+
+public class LogoutRequest {
+
+}

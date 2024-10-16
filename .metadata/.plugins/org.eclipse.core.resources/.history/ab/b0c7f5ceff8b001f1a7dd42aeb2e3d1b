@@ -1,0 +1,38 @@
+server:
+  port: 9090
+
+spring:
+  application:
+    name: API-GATEWAY
+  main:
+    web-application-type: reactive
+  cloud:
+    gateway:
+      routes:
+        - id: USER-SERVICE
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/api/users/**,/api/userProfile/**
+          filters:
+            - JwtHeaderFilter
+        - id: BLOG-SERVICE
+          uri: lb://BLOG-SERVICE
+          predicates:
+            - Path=/api/blogs/**
+          filters:
+            - JwtHeaderFilter
+            
+springdoc:
+  api-docs:
+      path: /v3/api-docs
+  swagger-ui:
+      path: /swagger-ui.html
+
+eureka:
+  instance:
+    prefer-ip-address: true
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true

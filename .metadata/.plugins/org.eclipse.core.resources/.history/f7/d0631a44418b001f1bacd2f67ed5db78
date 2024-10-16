@@ -1,0 +1,26 @@
+package com.services.BlogService.config;
+
+import java.util.Collections;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.client.RestTemplate;
+
+import com.services.BlogService.interceptors.BearerTokenInterceptor;
+
+
+@Configuration
+public class RestTemplateConfig {
+
+	@Bean
+	@LoadBalanced
+    public RestTemplate restTemplate(BearerTokenInterceptor bearerTokenInterceptor) {
+        RestTemplate restTemplate = new RestTemplate();
+        restTemplate.setInterceptors(Collections.singletonList(bearerTokenInterceptor));
+        return restTemplate;
+    }
+    
+}

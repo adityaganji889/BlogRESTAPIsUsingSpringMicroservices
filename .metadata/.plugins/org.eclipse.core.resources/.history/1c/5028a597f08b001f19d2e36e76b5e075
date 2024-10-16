@@ -1,0 +1,19 @@
+package com.services.UserService.config;
+
+import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+import io.swagger.v3.oas.annotations.info.Contact;
+import io.swagger.v3.oas.annotations.info.Info;
+
+@OpenAPIDefinition(
+  info = @Info(
+	  contact = @Contact (
+		  name = "Aditya Ganji",
+		  email = "adityaganji889@gmail.com"
+		),
+	  description = "OpenApi documentation for User Microservice"
+	)
+  
+)
+public class OpenApiConfig {
+
+}

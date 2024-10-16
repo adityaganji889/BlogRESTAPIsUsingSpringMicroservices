@@ -1,0 +1,2 @@
+#spring.application.name=ConfigServic
+#spring.cloud.config.server.jdbc.enabled=false

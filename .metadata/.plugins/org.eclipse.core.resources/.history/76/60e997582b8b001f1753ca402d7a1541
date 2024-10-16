@@ -1,0 +1,5 @@
+package com.services.BlogService.interceptors;
+
+public class BearerTokenInterceptor {
+
+}

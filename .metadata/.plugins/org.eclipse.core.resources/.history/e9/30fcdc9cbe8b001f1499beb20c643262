@@ -1,0 +1,5 @@
+package com.services.ConfigService.config;
+
+public class CustomJdbcEnvironmentRepository {
+
+}

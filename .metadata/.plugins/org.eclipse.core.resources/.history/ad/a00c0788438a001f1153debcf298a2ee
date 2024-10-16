@@ -1,0 +1,5 @@
+package com.services.UserService.utils;
+
+public class JwtUtil {
+
+}

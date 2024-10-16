@@ -1,0 +1,8 @@
+package com.services.BlogService.dtos;
+
+public class BlogsOfAuthorListResponseDTO {
+
+	private boolean success;
+	private String message;
+	
+}

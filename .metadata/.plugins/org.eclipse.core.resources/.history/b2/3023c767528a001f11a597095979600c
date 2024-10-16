@@ -1,0 +1,14 @@
+package com.services.UserService.dtos;
+
+import com.services.UserService.entities.Role;
+
+import lombok.Data;
+
+@Data
+public class UserRegistrationRequest {
+    private String username;
+    private String password;
+    private Role role; // Use Role enum
+
+    // Getters and Setters
+}

@@ -1,0 +1,54 @@
+package com.services.ConfigService.config;
+
+import org.springframework.cloud.config.environment.Environment;
+import org.springframework.cloud.config.server.environment.JdbcEnvironmentRepository;
+import org.springframework.jdbc.core.JdbcTemplate;
+
+import com.services.ConfigService.entities.ConfigProperty;
+import com.services.ConfigService.services.PropertyService;
+
+import org.springframework.cloud.config.server.environment.JdbcEnvironmentProperties;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
+public class CustomJdbcEnvironmentRepository extends JdbcEnvironmentRepository {
+
+	private final CustomPropertiesResultSetExtractor extractor;
+	
+	private final JdbcTemplate jdbcTemplate;
+
+    public CustomJdbcEnvironmentRepository(JdbcTemplate jdbcTemplate, JdbcEnvironmentProperties properties, CustomPropertiesResultSetExtractor extractor) {
+        super(jdbcTemplate, properties);
+        this.extractor = extractor;
+        this.jdbcTemplate = jdbcTemplate;
+    }
+
+    @Override
+    public Environment findOne(String application, String profile, String label) {
+        // Use the extractor to retrieve properties from the database
+        List<Property> properties = jdbcTemplate.query(
+                "SELECT `application`, `value` FROM properties WHERE `application` = ? AND `profile` = ? AND `label` = ?",
+                extractor,
+                application, profile, label
+        );
+
+        List<PropertySource<Property>> propertySources = new ArrayList<>();
+
+        HashMap<String,String> mp = new HashMap<String,String>();
+        // Populate property sources with actual key-value pairs
+        for (Property property : properties) {
+        	String name = property.getKey();
+        	String value = property.getValue();
+//        	mp.put(name, property.getValue());
+            propertySources.add((name,value));
+        }
+
+        Environment environment = new Environment(application, profile, label);
+        environment.addAll(propertySources); // Add property sources
+
+        return environment;
+    }
+}
+

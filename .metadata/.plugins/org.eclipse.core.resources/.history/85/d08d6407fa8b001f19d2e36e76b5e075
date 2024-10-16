@@ -1,0 +1,12 @@
+server:
+  port: 8082
+spring:
+  profiles:
+    active: blog
+  application:
+    name: BLOG-SERVICE
+  data:
+    mongodb:
+       uri: mongodb+srv://adityaganji889:2fZwf4uWx1rbxvx9@cluster0.rxjuy.mongodb.net/blogdb
+  config:
+    import: optional:configserver:lb://CONFIG-SERVICE/BLOG-SERVICE/blog/default
