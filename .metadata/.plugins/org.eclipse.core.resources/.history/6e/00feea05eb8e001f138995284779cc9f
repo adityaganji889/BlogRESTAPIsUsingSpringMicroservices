@@ -1,0 +1,13 @@
+package com.services.UserService.dtos;
+
+import java.util.List;
+
+import lombok.Data;
+
+@Data
+public class ListOfUsersResponseDTO {
+
+	private boolean success;
+	private String message;
+	private List<UserInfo> users;
+}

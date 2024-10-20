@@ -1,7 +1,5 @@
 package com.services.BlogService.dtos;
 
-import com.services.BlogService.entities.Blog;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;

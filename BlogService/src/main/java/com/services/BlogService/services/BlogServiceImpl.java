@@ -81,4 +81,16 @@ public class BlogServiceImpl implements BlogService {
 		return null;
 	}
 
+	@Override
+	public String deleteAllBlogsOfDeletedUsers(Long id) {
+		// TODO Auto-generated method stub
+		List<Blog> blogs = getAllBlogsOfAuthor(id);
+		if(blogs!=null) {
+			for (Blog blog : blogs) {
+				blogRepository.delete(blog);
+			}
+		}
+		return "All blogs of the deleted user deleted successfully.";
+	}
+
 }

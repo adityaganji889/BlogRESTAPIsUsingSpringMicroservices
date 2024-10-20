@@ -18,5 +18,7 @@ public interface BlogService {
     Blog updateBlog(BlogRequestDTO blogRequest, String id);
     
     String deleteBlog(String id);
+    
+    String deleteAllBlogsOfDeletedUsers(Long id);
 	
 }

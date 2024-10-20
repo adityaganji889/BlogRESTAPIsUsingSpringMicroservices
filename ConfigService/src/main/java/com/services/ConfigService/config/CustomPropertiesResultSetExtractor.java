@@ -1,12 +1,13 @@
 package com.services.ConfigService.config;
 
-import org.springframework.jdbc.core.ResultSetExtractor;
-import com.services.ConfigService.services.PropertyService;
-
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.springframework.jdbc.core.ResultSetExtractor;
+
+import com.services.ConfigService.services.PropertyService;
 
 public class CustomPropertiesResultSetExtractor implements ResultSetExtractor<List<Property>> {
     

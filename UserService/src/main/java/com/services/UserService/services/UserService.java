@@ -1,5 +1,6 @@
 package com.services.UserService.services;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +14,6 @@ import com.services.UserService.dtos.UserRegistrationRequest;
 import com.services.UserService.entities.Role;
 import com.services.UserService.entities.User;
 import com.services.UserService.repositories.UserRepository;
-import com.services.UserService.utils.JwtUtil;
 
 
 @Service
@@ -69,6 +69,55 @@ public class UserService {
     		return user.get();
     	}
 		return null;
+    }
+    
+    public void deleteUserById(Long id) {
+    	Optional<User> user = userRepository.findById(id);
+    	if(user.isPresent()) {
+    		userRepository.deleteById(user.get().getId());
+    	}
+    }
+    
+    public User updateUserRoleToAdminById(Long id) {
+    	Optional<User> user = userRepository.findById(id);
+    	User user1 = getUserInfo();
+    	if(user.isPresent()) {
+    		User user2 = user.get();
+    		if(user2.getId() != user1.getId() && user2.getRoles().equals(Role.USER)) {
+    			user2.setRoles(Role.ADMIN);
+        		User updatedUser = userRepository.save(user2);
+        		return updatedUser;    			
+    		}
+    		else {
+    			return user2;
+    		}
+    	}
+		return null;
+    }
+    
+    public User updateUserRoleToUserById(Long id) {
+    	Optional<User> user = userRepository.findById(id);
+    	User user1 = getUserInfo();
+    	if(user.isPresent()) {
+    		User user2 = user.get();
+    		if(user2.getId() != user1.getId() && user2.getRoles().equals(Role.ADMIN)) {
+    			user2.setRoles(Role.USER);
+        		User updatedUser = userRepository.save(user2);
+        		return updatedUser;    			
+    		}
+    		else {
+    			return user2;
+    		}
+    	}
+		return null;
+    }
+    
+    public List<User> getAllUsers () {
+    	List<User> users = userRepository.findAll();
+    	if(users.isEmpty()) {
+    		return null;
+    	}
+        return users;
     }
     
     public PasswordEncoder getPasswordEncoder() {

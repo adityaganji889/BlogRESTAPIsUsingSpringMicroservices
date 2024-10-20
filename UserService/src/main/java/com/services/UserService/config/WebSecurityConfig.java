@@ -4,8 +4,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.builders.WebSecurity;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -34,10 +32,10 @@ public class WebSecurityConfig {
 			config.addAllowedMethod("*");
 			return config;
 		})).authorizeHttpRequests(authorize -> authorize
-//                .requestMatchers("/api/auth/**").permitAll() // Allow access to auth endpoints
 				.requestMatchers("/api/users/**","/v2/api-docs","/v3/api-docs","/v3/api-docs/**","/swagger-resources","/swagger-resources/**","/configurtion-ui","/configuration-security","/swagger-ui/**","/webjars/**","/swagger-ui.html").permitAll().requestMatchers("/api/userProfile/**")
 				.hasAnyAuthority("USER", "ADMIN")
-//                .requestMatchers("/api/blogs/**").permitAll()// allow access to request from blog to this user service.
+				.requestMatchers("/api/admin/**")
+				.hasAuthority("ADMIN")
 				.anyRequest().authenticated())
 				.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

@@ -1,0 +1,97 @@
+package com.services.UserService.controllers;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.services.UserService.dtos.ListOfUsersResponseDTO;
+import com.services.UserService.dtos.UserInfo;
+import com.services.UserService.entities.Role;
+import com.services.UserService.entities.User;
+import com.services.UserService.services.UserService;
+import com.services.UserService.utils.JwtUtil;
+
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
+@RestController
+@RequestMapping("/api/userProfile")
+@CrossOrigin("*")
+@SecurityRequirement(name = "BearerAuth") // Should match the SecurityScheme name
+@Tag(name = "User APIs")
+public class AdminController {
+	
+	@Autowired
+	private UserService userService;
+
+	@Autowired
+	private JwtUtil jwtUtil;
+	
+	public String getUsernameFromLoggedInToken(String authorizationHeader) {
+		String username = null;
+		if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+			String token = authorizationHeader.substring(7);
+			if (jwtUtil.validateToken(token)) {
+				username = jwtUtil.extractUsername(token);
+			} else {
+				username = "Invalid Token";
+			}
+		}
+		return username;
+	}
+	
+	@GetMapping("/getAllUsers")
+	public ResponseEntity<ListOfUsersResponseDTO> getAllUsers(
+			@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) @Parameter(hidden = true) String authorizationHeader) {
+		String username = getUsernameFromLoggedInToken(authorizationHeader);
+		if (username.equals("Invalid Token")) {
+			return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+		}
+		Optional<User> user = userService.findByUsername(username);
+		List<UserInfo> listOfUsers = new ArrayList<UserInfo>();
+		ListOfUsersResponseDTO listOfUsersResponse = new ListOfUsersResponseDTO();
+		if (user.isPresent() && user.get().getRoles().equals(Role.ADMIN)) {
+			List<User> users = userService.getAllUsers();
+			if(users!=null) {
+				for(User u: users) {
+					UserInfo userInfo = new UserInfo();
+					userInfo.setId(u.getId());
+					userInfo.setUsername(u.getUsername());
+					userInfo.setRole(u.getRoles());
+					listOfUsers.add(userInfo);
+				}
+				listOfUsersResponse.setSuccess(true);
+				listOfUsersResponse.setMessage("All users info fetched successfully.");
+				listOfUsersResponse.setUsers(listOfUsers);
+				return new ResponseEntity<ListOfUsersResponseDTO>(listOfUsersResponse, HttpStatus.OK);
+			}
+			else {
+				listOfUsers = null;
+				listOfUsersResponse.setSuccess(false);
+				listOfUsersResponse.setMessage("No users to display.");
+				listOfUsersResponse.setUsers(null);
+				return new ResponseEntity<ListOfUsersResponseDTO>(listOfUsersResponse, HttpStatus.NOT_FOUND);
+			}
+		} else {
+			listOfUsers = null;
+			listOfUsersResponse.setSuccess(false);
+			listOfUsersResponse.setMessage("You're not an Admin user, trying to access all users info.");
+			listOfUsersResponse.setUsers(null);
+			return new ResponseEntity<ListOfUsersResponseDTO>(listOfUsersResponse, HttpStatus.FORBIDDEN);
+		}
+	}
+	
+	
+
+}

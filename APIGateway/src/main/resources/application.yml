@@ -12,7 +12,7 @@ spring:
         - id: USER-SERVICE
           uri: lb://USER-SERVICE
           predicates:
-            - Path=/api/users/**,/api/userProfile/**
+            - Path=/api/users/**,/api/userProfile/**,/api/admin/**
           filters:
             - JwtHeaderFilter
         - id: BLOG-SERVICE

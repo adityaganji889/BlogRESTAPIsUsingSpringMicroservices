@@ -1,17 +1,13 @@
 package com.services.ConfigService.config;
 
-import org.springframework.cloud.config.environment.Environment;
-import org.springframework.cloud.config.server.environment.JdbcEnvironmentRepository;
-import org.springframework.jdbc.core.JdbcTemplate;
-
-import com.services.ConfigService.entities.ConfigProperty;
-import com.services.ConfigService.services.PropertyService;
-import org.springframework.cloud.config.environment.PropertySource;
-import org.springframework.cloud.config.server.environment.JdbcEnvironmentProperties;
-
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+
+import org.springframework.cloud.config.environment.Environment;
+import org.springframework.cloud.config.environment.PropertySource;
+import org.springframework.cloud.config.server.environment.JdbcEnvironmentProperties;
+import org.springframework.cloud.config.server.environment.JdbcEnvironmentRepository;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 public class CustomJdbcEnvironmentRepository extends JdbcEnvironmentRepository {
 

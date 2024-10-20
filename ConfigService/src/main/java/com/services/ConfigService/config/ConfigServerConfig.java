@@ -1,9 +1,8 @@
 package com.services.ConfigService.config;
 
-import com.services.ConfigService.services.PropertyService;
-import com.zaxxer.hikari.HikariDataSource;
+import java.util.Collections;
 
-import io.micrometer.observation.ObservationRegistry;
+import javax.sql.DataSource;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,7 +11,6 @@ import org.springframework.cloud.config.server.environment.CompositeEnvironmentR
 import org.springframework.cloud.config.server.environment.EnvironmentRepository;
 import org.springframework.cloud.config.server.environment.JdbcEnvironmentProperties;
 import org.springframework.cloud.config.server.environment.JdbcEnvironmentRepository;
-import org.springframework.cloud.config.server.environment.JdbcEnvironmentRepository.PropertiesResultSetExtractor;
 import org.springframework.cloud.config.server.environment.SearchPathCompositeEnvironmentRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,8 +18,10 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-import javax.sql.DataSource;
-import java.util.Collections;
+import com.services.ConfigService.services.PropertyService;
+import com.zaxxer.hikari.HikariDataSource;
+
+import io.micrometer.observation.ObservationRegistry;
 
 @Configuration
 @EnableConfigServer

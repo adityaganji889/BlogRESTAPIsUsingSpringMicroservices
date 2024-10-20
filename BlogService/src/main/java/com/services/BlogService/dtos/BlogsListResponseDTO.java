@@ -1,7 +1,8 @@
 package com.services.BlogService.dtos;
 
 import java.util.List;
-import com.services.BlogService.entities.Blog;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -14,6 +15,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL) // This will ignore null fields
 public class BlogsListResponseDTO {
 
 	private boolean success;
