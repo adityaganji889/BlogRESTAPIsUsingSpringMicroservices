@@ -5,7 +5,9 @@
  * RESTful API with endpoints for creating, reading, updating, and deleting blogs. 
  * Each user detail have atleast an email(username), password, role.
  * User can register as either of the 2 roles available: USER, ADMIN.
- * Made use of Eureka Discovery Service for registering microservices: API-GATEWAY, CONFIG-SERVICE, USER-SERVICE, BLOG-SERVICE.
+ * Admin User can make change other user roles to Admin/User, can delete a user including cascade delete of his/her blogs, can get all users info.
+ * User can get blog to read by blog id, can get all blogs to read, can post new blogs, can update, delete their created blogs.
+ * Made use of Netflix Eureka Discovery Service for registering microservices: API-GATEWAY, CONFIG-SERVICE, USER-SERVICE, BLOG-SERVICE.
  * Fetching application.properties for CONFIG-SERVICE, USER-SERVICE, BLOG-SERVICE from SQL DB, properties table.
  * USER-SERVICE stores users info in SQL DB, users table.
  * BLOG-SERVICE stores blogs info in NoSQL DB, blogs collection.
