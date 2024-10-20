@@ -19,7 +19,11 @@ import com.services.UserService.entities.User;
 import com.services.UserService.services.UserService;
 import com.services.UserService.utils.LoggedInUsernameExtractionUtil;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -27,7 +31,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RequestMapping("/api/userProfile")
 @CrossOrigin("*")
 @SecurityRequirement(name = "BearerAuth") // Should match the SecurityScheme name
-@Tag(name = "User APIs")
+@Tag(name = "User APIs", description = "APIs for user profile management, including fetching and updating user details.")
 public class UserProfileController {
 
 	@Autowired
@@ -36,6 +40,16 @@ public class UserProfileController {
 	@Autowired
 	private LoggedInUsernameExtractionUtil loggedInUsername;
 
+	@Operation(
+			summary = "Get logged-in user details",
+			description = "Fetches details of the currently logged-in user.",
+			responses = {
+				@ApiResponse(responseCode = "200", description = "Logged-in user info fetched successfully",
+					content = @Content(schema = @Schema(implementation = UserInfoResponse.class))),
+				@ApiResponse(responseCode = "401", description = "Unauthorized - Invalid token", content = @Content),
+				@ApiResponse(responseCode = "404", description = "User not found", content = @Content)
+			}
+		)
 	@GetMapping("/userDetails")
 	public ResponseEntity<UserInfoResponse> getUserDetails(
 			@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) @Parameter(hidden = true) String authorizationHeader) {
@@ -63,6 +77,19 @@ public class UserProfileController {
 		}
 	}
 
+	@Operation(
+			summary = "Get user details by ID",
+			description = "Fetches details of a user by their ID.",
+			parameters = {
+				@Parameter(name = "id", description = "ID of the user to fetch", required = true)
+			},
+			responses = {
+				@ApiResponse(responseCode = "200", description = "User info with specified ID fetched successfully",
+					content = @Content(schema = @Schema(implementation = UserInfoResponse.class))),
+				@ApiResponse(responseCode = "401", description = "Unauthorized - Invalid token", content = @Content),
+				@ApiResponse(responseCode = "404", description = "User not found", content = @Content)
+			}
+		)
 	@GetMapping("/userDetails/{id}")
 	public ResponseEntity<UserInfoResponse> getUserDetailsById(
 			@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) @Parameter(hidden = true) String authorizationHeader,

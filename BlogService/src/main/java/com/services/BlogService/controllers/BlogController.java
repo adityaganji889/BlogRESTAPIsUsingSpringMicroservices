@@ -35,7 +35,12 @@ import com.services.BlogService.dtos.UserInfoResponse;
 import com.services.BlogService.entities.Blog;
 import com.services.BlogService.services.BlogService;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -43,7 +48,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RequestMapping("/api/blogs")
 @CrossOrigin("*")
 @SecurityRequirement(name = "BearerAuth")
-@Tag(name = "Blog APIs")
+@Tag(name = "Blog APIs", description = "APIs for managing blog entries, including creating, updating, fetching, and deleting blogs.")
 public class BlogController {
 
 	@Autowired
@@ -81,6 +86,12 @@ public class BlogController {
 		return userInfoResponse;
 	}
 
+	@Operation(summary = "Get all blogs", description = "Fetches a list of all blogs.")
+	@ApiResponses(value = {
+		@ApiResponse(responseCode = "200", description = "All blogs fetched successfully", 
+			content = @Content(schema = @Schema(implementation = BlogsListResponseDTO.class))),
+		@ApiResponse(responseCode = "404", description = "No blogs to display", content = @Content)
+	})
 	@GetMapping("/getAllBlogs")
 	public ResponseEntity<BlogsListResponseDTO> getAllBlogs(
 			@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) @Parameter(hidden = true) String authorizationHeader) {
@@ -114,6 +125,12 @@ public class BlogController {
 		}
 	}
 
+	@Operation(summary = "Get all blogs of an author", description = "Fetches a list of blogs written by a specific author.")
+	@ApiResponses(value = {
+		@ApiResponse(responseCode = "200", description = "All blogs fetched successfully", 
+			content = @Content(schema = @Schema(implementation = BlogsOfAuthorListResponseDTO.class))),
+		@ApiResponse(responseCode = "404", description = "No blogs of this author found", content = @Content)
+	})
 	@GetMapping("/getAllBlogs/{authorId}")
 	public ResponseEntity<BlogsOfAuthorListResponseDTO> getAllBlogsOfAuthor(
 			@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) @Parameter(hidden = true) String authorizationHeader,
@@ -149,6 +166,12 @@ public class BlogController {
 		}
 	}
 
+	@Operation(summary = "Create a new blog", description = "Creates a new blog entry.")
+	@ApiResponses(value = {
+		@ApiResponse(responseCode = "200", description = "New blog created successfully", 
+			content = @Content(schema = @Schema(implementation = BlogResponseDTO.class))),
+		@ApiResponse(responseCode = "400", description = "Error in creating a new blog", content = @Content)
+	})
 	@PostMapping("/createNewBlog")
 	public ResponseEntity<BlogResponseDTO> createNewBlog(
 			@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) @Parameter(hidden = true) String authorizationHeader,
@@ -179,6 +202,12 @@ public class BlogController {
 		}
 	}
 
+	@Operation(summary = "Get a blog by ID", description = "Fetches a blog entry by its ID.")
+	@ApiResponses(value = {
+		@ApiResponse(responseCode = "200", description = "Blog fetched successfully", 
+			content = @Content(schema = @Schema(implementation = BlogResponseDTO.class))),
+		@ApiResponse(responseCode = "404", description = "Blog not found", content = @Content)
+	})
 	@GetMapping("/getBlog/{id}")
 	public ResponseEntity<BlogResponseDTO> getBlog(
 			@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) @Parameter(hidden = true) String authorizationHeader,
@@ -211,6 +240,13 @@ public class BlogController {
 		}
 	}
 
+	@Operation(summary = "Update an existing blog", description = "Updates the details of a blog entry.")
+	@ApiResponses(value = {
+		@ApiResponse(responseCode = "200", description = "Blog updated successfully", 
+			content = @Content(schema = @Schema(implementation = BlogResponseDTO.class))),
+		@ApiResponse(responseCode = "403", description = "Forbidden: You do not have permission to update this blog", content = @Content),
+		@ApiResponse(responseCode = "400", description = "Error while updating the blog", content = @Content)
+	})
 	@PutMapping("/updateExistingBlog/{id}")
 	public ResponseEntity<BlogResponseDTO> updateBlog(
 			@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) @Parameter(hidden = true) String authorizationHeader,
@@ -258,6 +294,13 @@ public class BlogController {
 		}
 	}
 
+	@Operation(summary = "Delete a blog", description = "Deletes a blog entry by its ID.")
+	@ApiResponses(value = {
+		@ApiResponse(responseCode = "200", description = "Blog deleted successfully", 
+			content = @Content(schema = @Schema(implementation = BlogResponseDTO.class))),
+		@ApiResponse(responseCode = "403", description = "Forbidden: You do not have permission to delete this blog", content = @Content),
+		@ApiResponse(responseCode = "404", description = "Blog not found to delete", content = @Content)
+	})
 	@DeleteMapping("/deleteExistingBlog/{id}")
 	public ResponseEntity<BlogResponseDTO> deleteBlog(
 			@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) @Parameter(hidden = true) String authorizationHeader,
@@ -296,6 +339,12 @@ public class BlogController {
 		}
 	}
 
+	@Operation(summary = "Delete blogs of a deleted user", description = "Deletes all blogs associated with a deleted user.")
+	@ApiResponses(value = {
+		@ApiResponse(responseCode = "200", description = "Blogs of deleted user deleted successfully", 
+			content = @Content(schema = @Schema(implementation = DefaultResponse.class))),
+		@ApiResponse(responseCode = "403", description = "Forbidden: You do not have permission to delete blogs of deleted user", content = @Content)
+	})
 	@DeleteMapping("/deleteBlogsOfDeletedUser/{id}")
 	public ResponseEntity<DefaultResponse> deleteBlogOfDeletedUser(
 			@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) @Parameter(hidden = true) String authorizationHeader,

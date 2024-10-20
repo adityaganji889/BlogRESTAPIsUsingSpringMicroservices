@@ -29,15 +29,19 @@ import com.services.UserService.entities.User;
 import com.services.UserService.services.UserService;
 import com.services.UserService.utils.LoggedInUsernameExtractionUtil;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
 @RequestMapping("/api/admin")
 @CrossOrigin("*")
-@SecurityRequirement(name = "BearerAuth") // Should match the SecurityScheme name
-@Tag(name = "Admin APIs")
+@SecurityRequirement(name = "BearerAuth") // Should match the SecurityScheme name // Enabling Security Requirement on Controller Basis
+@Tag(name = "Admin APIs", description = "APIs for admin operations, including managing users and their permissions.")
 public class AdminController {
 	
 	@Autowired
@@ -67,6 +71,17 @@ public class AdminController {
 		return defaultResponse;
 	}
 	
+	@Operation(
+			summary = "Get all users",
+			description = "Fetches a list of all users in the system. Accessible only by admin.",
+			responses = {
+				@ApiResponse(responseCode = "200", description = "All users fetched successfully",
+					content = @Content(schema = @Schema(implementation = ListOfUsersResponseDTO.class))),
+				@ApiResponse(responseCode = "401", description = "Unauthorized - Invalid token", content = @Content),
+				@ApiResponse(responseCode = "403", description = "Forbidden - Not an admin user", content = @Content),
+				@ApiResponse(responseCode = "404", description = "No users found", content = @Content)
+			}
+		)
 	@GetMapping("/getAllUsers")
 	public ResponseEntity<ListOfUsersResponseDTO> getAllUsers(
 			@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) @Parameter(hidden = true) String authorizationHeader) {
@@ -108,6 +123,21 @@ public class AdminController {
 		}
 	}
 	
+	@SuppressWarnings("unused")
+	@Operation(
+			summary = "Update user role to Admin",
+			description = "Updates the role of a user to Admin. Accessible only by admin.",
+			parameters = {
+				@Parameter(name = "id", description = "ID of the user to update", required = true)
+			},
+			responses = {
+				@ApiResponse(responseCode = "200", description = "User role updated to admin successfully",
+					content = @Content(schema = @Schema(implementation = UserInfoResponse.class))),
+				@ApiResponse(responseCode = "401", description = "Unauthorized - Invalid token", content = @Content),
+				@ApiResponse(responseCode = "403", description = "Forbidden - Not an admin user", content = @Content),
+				@ApiResponse(responseCode = "404", description = "User not found or already an admin", content = @Content)
+			}
+		)
 	@PutMapping("/updateUserRoleToAdmin/{id}")
 	public ResponseEntity<UserInfoResponse> updateUserRoleToAdminById(
 			@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) @Parameter(hidden = true) String authorizationHeader,
@@ -160,6 +190,21 @@ public class AdminController {
 		}
 	}
 	
+	@SuppressWarnings("unused")
+	@Operation(
+			summary = "Update user role to User",
+			description = "Updates the role of a user to normal user. Accessible only by admin.",
+			parameters = {
+				@Parameter(name = "id", description = "ID of the user to update", required = true)
+			},
+			responses = {
+				@ApiResponse(responseCode = "200", description = "User role updated to user successfully",
+					content = @Content(schema = @Schema(implementation = UserInfoResponse.class))),
+				@ApiResponse(responseCode = "401", description = "Unauthorized - Invalid token", content = @Content),
+				@ApiResponse(responseCode = "403", description = "Forbidden - Not an admin user", content = @Content),
+				@ApiResponse(responseCode = "404", description = "User not found or already a normal user", content = @Content)
+			}
+		)
 	@PutMapping("/updateUserRoleToUser/{id}")
 	public ResponseEntity<UserInfoResponse> updateUserRoleToUserById(
 			@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) @Parameter(hidden = true) String authorizationHeader,
@@ -213,6 +258,20 @@ public class AdminController {
 		}
 	}
 	
+	@Operation(
+			summary = "Delete user by ID",
+			description = "Deletes a user from the system by ID. Accessible only by admin.",
+			parameters = {
+				@Parameter(name = "id", description = "ID of the user to delete", required = true)
+			},
+			responses = {
+				@ApiResponse(responseCode = "200", description = "User deleted successfully",
+					content = @Content(schema = @Schema(implementation = UserInfoResponse.class))),
+				@ApiResponse(responseCode = "401", description = "Unauthorized - Invalid token", content = @Content),
+				@ApiResponse(responseCode = "403", description = "Forbidden - Not an admin user", content = @Content),
+				@ApiResponse(responseCode = "404", description = "User not found or trying to delete yourself", content = @Content)
+			}
+		)
 	@DeleteMapping("/deleteUserById/{id}")
 	public ResponseEntity<UserInfoResponse> deleteUserById(
 			@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) @Parameter(hidden = true) String authorizationHeader,

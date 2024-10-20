@@ -1,0 +1,25 @@
+package com.services.UserService.config;
+
+import java.util.Collections;
+
+import org.springdoc.core.customizers.OpenApiCustomiser;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class OpenApiSecurityConfig {
+
+    @Bean
+    public OpenApiCustomiser customizeOpenApi() {
+        return openApi -> {
+            // Remove security requirement for specific paths
+            openApi.getPaths().forEach((path, pathItem) -> {
+                if (path.equals("/api/users/.*")) {
+                    pathItem.readOperationsMap().forEach((httpMethod, operation) -> {
+                        operation.setSecurity(Collections.emptyList());
+                    });
+                }
+            });
+        };
+    }
+}

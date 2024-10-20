@@ -1,5 +1,11 @@
 package com.services.UserService.config;
 
+import java.util.Collections;
+
+import org.springdoc.core.customizers.OpenApiCustomiser;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeIn;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
@@ -28,13 +34,7 @@ import io.swagger.v3.oas.annotations.servers.Server;
     		description = "Local Env",
     		url = "http://localhost:8081"
     	)// similar add another entry of Server for Prod Env.	
-    },
-    security = {
-    	@SecurityRequirement(
-    		name="BearerAuth"	
-    	)
     }
-   
 )
 @SecurityScheme(
 	name="BearerAuth",
@@ -44,6 +44,24 @@ import io.swagger.v3.oas.annotations.servers.Server;
 	bearerFormat="JWT",
 	in = SecuritySchemeIn.HEADER // injects JWT Token in the header
 )
+@Configuration
 public class OpenApiConfig {
+	
+	@Bean
+    public OpenApiCustomiser customizeOpenApi() {
+        return openApi -> {
+            // Remove security requirement for specific paths
+            openApi.getPaths().forEach((path, pathItem) -> {
+                if (path.startsWith("/api/users")) {
+                    pathItem.readOperationsMap().forEach((httpMethod, operation) -> {
+                    	// Log to confirm the operation is being modified
+                        System.out.println("Removing security for path: " + path + " Method: " + httpMethod);
 
+                        // Clear security requirements for this operation
+                        operation.setSecurity(Collections.emptyList());
+                    });
+                }
+            });
+        };
+    }
 }

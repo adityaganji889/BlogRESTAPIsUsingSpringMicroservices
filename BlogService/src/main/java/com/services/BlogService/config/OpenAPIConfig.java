@@ -31,7 +31,7 @@ import io.swagger.v3.oas.annotations.servers.Server;
 		    },
 		  security = {
 			    	@SecurityRequirement(
-			    		name="BearerAuth"	
+			    		name="BearerAuth"	//Enabling Security Requirement Globally.
 			    	)
 			    }
 )
