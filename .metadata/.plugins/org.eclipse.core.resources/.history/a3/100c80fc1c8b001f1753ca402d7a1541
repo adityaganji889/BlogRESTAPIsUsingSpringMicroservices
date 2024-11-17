@@ -1,5 +1,0 @@
-package com.services.BlogService.services;
-
-public interface BlogService {
-
-}

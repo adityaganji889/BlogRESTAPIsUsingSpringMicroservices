@@ -1,8 +1,0 @@
-package com.services.BlogService.dtos;
-
-public class UserInfo {
-
-	private Long id;
-	private String username;
-	private Role role;
-}

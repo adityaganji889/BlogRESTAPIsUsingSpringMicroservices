@@ -1,5 +1,0 @@
-package com.services.BlogService.dtos;
-
-public class BlogsListResponseDTO {
-
-}

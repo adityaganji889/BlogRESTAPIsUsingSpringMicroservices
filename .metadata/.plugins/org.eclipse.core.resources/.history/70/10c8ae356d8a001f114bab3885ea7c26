@@ -1,9 +1,0 @@
-package com.services.UserService.dtos;
-
-public class LoggedInResponse {
-    
-	private Boolean success;
-    private String message;
-    private String username;
-    private String token;
-}

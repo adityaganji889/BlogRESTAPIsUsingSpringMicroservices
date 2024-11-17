@@ -1,0 +1,194 @@
+package com.services.UserService.services;
+
+import java.util.List;
+import java.util.Optional;
+//import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
+//import org.springframework.scheduling.annotation.Async;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import com.services.UserService.dtos.UserRegistrationRequest;
+import com.services.UserService.entities.Role;
+import com.services.UserService.entities.User;
+import com.services.UserService.repositories.UserRepository;
+
+@Service
+public class UserService {
+
+	@Autowired
+	private UserRepository userRepository;
+
+	@Autowired
+	private PasswordEncoder passwordEncoder;
+
+	@Async("asyncTaskExecutor")  // To make this method make asynchronous calls to mysql db
+	public CompletableFuture<Void> registerNewUser(UserRegistrationRequest request) {
+		return CompletableFuture.runAsync(() -> {
+			try {
+				Optional<User> userExists = userRepository.findByUsername(request.getUsername());
+				if (!userExists.isPresent()) {
+					User user = new User();
+					user.setUsername(request.getUsername());
+					user.setPassword(passwordEncoder.encode(request.getPassword()));
+//		            user.setRoles(Collections.singleton(request.getRole())); // Set role using enum
+					if (request.getRole() == Role.USER) {
+						user.setRoles(Role.USER);
+					} else {
+						user.setRoles(Role.ADMIN);
+					}
+					userRepository.save(user);
+				}
+			}
+			catch(Exception e) {
+				e.printStackTrace();
+			}
+		});
+	}
+
+	@Async("asyncTaskExecutor") 
+	public CompletableFuture<Optional<User>> findByUsername(String username) {
+	    return CompletableFuture.supplyAsync(() -> userRepository.findByUsername(username));
+	}
+
+	@Async("asyncTaskExecutor") 
+	public CompletableFuture<User> getUserInfo() {
+		return CompletableFuture.supplyAsync(() -> {
+			try {
+				User user = new User();
+				Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+				UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+				var userInfo = userRepository.findByUsername(userDetails.getUsername())
+						.orElseThrow(() -> new IllegalArgumentException("Invalid email or password"));
+				;
+				if (userInfo != null) {
+					user.setId(userInfo.getId());
+					user.setUsername(userInfo.getUsername());
+					user.setPassword(userInfo.getPassword());
+					user.setRoles(userInfo.getRoles());
+					return user;
+				}
+				return null;
+			}
+			catch(Exception e) {
+				e.printStackTrace();
+				return null;
+			}
+		});
+	}
+
+	@Async("asyncTaskExecutor") 
+	public CompletableFuture<User> getUserInfoById(Long id) {
+		return CompletableFuture.supplyAsync(() -> {
+			try {
+				Optional<User> user = userRepository.findById(id);
+				if (user.isPresent()) {
+					return user.get();
+				}
+				return null;
+			} catch (Exception e) {
+				e.printStackTrace();
+				return null;
+			}
+		});
+	}
+
+	@Async("asyncTaskExecutor") 
+	public CompletableFuture<Void> deleteUserById(Long id) {
+		return CompletableFuture.runAsync(() -> {
+			Optional<User> user = userRepository.findById(id);
+			if (user.isPresent()) {
+				userRepository.deleteById(user.get().getId());
+			}
+		});
+	}
+
+	@Async("asyncTaskExecutor") 
+	public CompletableFuture<User> updateUserRoleToAdminById(Long id) {
+		return CompletableFuture.supplyAsync(() -> {
+			try {
+				Optional<User> user = userRepository.findById(id);
+				CompletableFuture<User> cf = getUserInfo();
+				User user1 = null;
+				try {
+					user1 = cf.get();
+				} catch (InterruptedException | ExecutionException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				if (user.isPresent()) {
+					User user2 = user.get();
+					if (user2.getId() != user1.getId() && user2.getRoles().equals(Role.USER)) {
+						user2.setRoles(Role.ADMIN);
+						User updatedUser = userRepository.save(user2);
+						return updatedUser;
+					} else {
+						return user2;
+					}
+				} else {
+					return null;
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+				return null;
+			}
+		});
+	}
+
+	@Async("asyncTaskExecutor") 
+	public CompletableFuture<User> updateUserRoleToUserById(Long id) {
+		return CompletableFuture.supplyAsync(() -> {
+			try {
+				Optional<User> user = userRepository.findById(id);
+				CompletableFuture<User> cf = getUserInfo();
+				User user1 = null;
+				try {
+					user1 = cf.get();
+				} catch (InterruptedException | ExecutionException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				if (user.isPresent()) {
+					User user2 = user.get();
+					if (user2.getId() != user1.getId() && user2.getRoles().equals(Role.ADMIN)) {
+						user2.setRoles(Role.USER);
+						User updatedUser = userRepository.save(user2);
+						return updatedUser;
+					} else {
+						return user2;
+					}
+				} else {
+					return null;
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+				return null;
+			}
+		});
+	}
+
+	@Async
+	public CompletableFuture<List<User>> getAllUsers() {
+		return CompletableFuture.supplyAsync(() -> {
+			try {
+				List<User> users = userRepository.findAll();
+				return users.isEmpty() ? null : users;
+			} catch (Exception e) {
+				e.printStackTrace();
+				return null; // Or complete the future exceptionally
+			}
+		});
+	}
+
+	public PasswordEncoder getPasswordEncoder() {
+		return passwordEncoder;
+	}
+
+}

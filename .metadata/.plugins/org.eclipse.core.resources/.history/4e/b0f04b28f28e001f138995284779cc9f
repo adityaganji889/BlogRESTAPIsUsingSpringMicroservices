@@ -1,8 +1,0 @@
-package com.services.BlogService.dtos;
-
-@Data
-public class DefaultResponse {
-
-	private boolean success;
-	private String message;
-}

@@ -1,9 +1,0 @@
-package com.services.BlogService.repositories;
-
-import org.springframework.data.mongodb.repository.MongoRepository;
-
-import com.services.BlogService.entities.Blog;
-
-public interface BlogRepository extends MongoRepository<Blog, String> {
-    // Custom query methods can be added here
-}

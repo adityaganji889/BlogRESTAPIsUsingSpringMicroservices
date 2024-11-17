@@ -1,7 +1,0 @@
-spring:
-  application:
-    name: USER-SERVICE
-  config:
-   import: http://localhost:8083
-  profiles:
-    active: user

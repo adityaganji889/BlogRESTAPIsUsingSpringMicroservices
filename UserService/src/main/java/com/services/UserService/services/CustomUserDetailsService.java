@@ -26,6 +26,9 @@ public class CustomUserDetailsService implements UserDetailsService {
         Optional<User> userOptional = userRepository.findByUsername(username);
         User user = userOptional.orElseThrow(() -> new UsernameNotFoundException("User not found"));
         String role = "";
+        System.out.println("CustomUserDetailsService:");
+        System.out.println(user.getUsername());
+        System.out.println(user.getRoles());
         if(user.getRoles()==Role.USER) {
         	role = "USER";
         }

@@ -3,6 +3,7 @@ package com.services.UserService.controllers;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
@@ -40,7 +41,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RestController
 @RequestMapping("/api/admin")
 @CrossOrigin("*")
-@SecurityRequirement(name = "BearerAuth") // Should match the SecurityScheme name // Enabling Security Requirement on Controller Basis
+@SecurityRequirement(name = "BearerAuth")
 @Tag(name = "Admin APIs", description = "APIs for admin operations, including managing users and their permissions.")
 public class AdminController {
 	
@@ -60,15 +61,17 @@ public class AdminController {
 		return entity;
 	}
 	
-	public DefaultResponse getResponseOfDeletedUserBlogs(HttpEntity<String> entity, Long id) {
-		DefaultResponse defaultResponse = new DefaultResponse();
-		try {
-			defaultResponse = restTemplate.exchange("http://BLOG-SERVICE/api/blogs/deleteBlogsOfDeletedUser/" + id,
-					HttpMethod.DELETE, entity, DefaultResponse.class).getBody();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return defaultResponse;
+	public CompletableFuture<DefaultResponse> getResponseOfDeletedUserBlogs(HttpEntity<String> entity, Long id) {
+		return CompletableFuture.supplyAsync(() -> {
+			DefaultResponse defaultResponse = new DefaultResponse();
+			try {
+				defaultResponse = restTemplate.exchange("http://BLOG-SERVICE/api/blogs/deleteBlogsOfDeletedUser/" + id,
+						HttpMethod.DELETE, entity, DefaultResponse.class).getBody();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			return defaultResponse;
+		});
 	}
 	
 	@Operation(
@@ -85,42 +88,50 @@ public class AdminController {
 	@GetMapping("/getAllUsers")
 	public ResponseEntity<ListOfUsersResponseDTO> getAllUsers(
 			@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) @Parameter(hidden = true) String authorizationHeader) {
-		String username = loggedInUsername.getUsernameFromLoggedInToken(authorizationHeader);
-		if (username.equals("Invalid Token")) {
-			return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-		}
-		Optional<User> user = userService.findByUsername(username);
-		List<UserInfo> listOfUsers = new ArrayList<UserInfo>();
-		ListOfUsersResponseDTO listOfUsersResponse = new ListOfUsersResponseDTO();
-		if (user.isPresent() && user.get().getRoles().equals(Role.ADMIN)) {
-			List<User> users = userService.getAllUsers();
-			if(users!=null) {
-				for(User u: users) {
-					UserInfo userInfo = new UserInfo();
-					userInfo.setId(u.getId());
-					userInfo.setUsername(u.getUsername());
-					userInfo.setRole(u.getRoles());
-					listOfUsers.add(userInfo);
+			ListOfUsersResponseDTO listOfUsersResponse = new ListOfUsersResponseDTO();
+			try {
+				String username = loggedInUsername.getUsernameFromLoggedInToken(authorizationHeader);
+				if (username.equals("Invalid Token")) {
+					return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
 				}
-				listOfUsersResponse.setSuccess(true);
-				listOfUsersResponse.setMessage("All users info fetched successfully.");
-				listOfUsersResponse.setUsers(listOfUsers);
-				return new ResponseEntity<ListOfUsersResponseDTO>(listOfUsersResponse, HttpStatus.OK);
+				CompletableFuture<Optional<User>> cfu = userService.findByUsername(username);
+				Optional<User> user = cfu.get();
+				List<UserInfo> listOfUsers = new ArrayList<UserInfo>();
+				if (user.isPresent() && user.get().getRoles().equals(Role.ADMIN)) {
+					CompletableFuture<List<User>> cfus = userService.getAllUsers(); 
+					List<User> users = cfus.get();
+					if(users != null) {
+						for(User u: users) {
+							UserInfo userInfo = new UserInfo();
+							userInfo.setId(u.getId());
+							userInfo.setUsername(u.getUsername());
+							userInfo.setRole(u.getRoles());
+							listOfUsers.add(userInfo);
+						}
+						listOfUsersResponse.setSuccess(true);
+						listOfUsersResponse.setMessage("All users info fetched successfully.");
+						listOfUsersResponse.setUsers(listOfUsers);
+						return new ResponseEntity<ListOfUsersResponseDTO>(listOfUsersResponse, HttpStatus.OK);
+					} else {
+						listOfUsersResponse.setSuccess(false);
+						listOfUsersResponse.setMessage("No users to display.");
+						listOfUsersResponse.setUsers(null);
+						return new ResponseEntity<ListOfUsersResponseDTO>(listOfUsersResponse, HttpStatus.NOT_FOUND);
+					}
+				} else {
+					listOfUsersResponse.setSuccess(false);
+					listOfUsersResponse.setMessage("You're not an Admin user, trying to access all users info.");
+					listOfUsersResponse.setUsers(null);
+					return new ResponseEntity<ListOfUsersResponseDTO>(listOfUsersResponse, HttpStatus.FORBIDDEN);
+				}
 			}
-			else {
-				listOfUsers = null;
+			catch(Exception e) {
+				e.printStackTrace();
 				listOfUsersResponse.setSuccess(false);
-				listOfUsersResponse.setMessage("No users to display.");
+				listOfUsersResponse.setMessage(e.getMessage());
 				listOfUsersResponse.setUsers(null);
-				return new ResponseEntity<ListOfUsersResponseDTO>(listOfUsersResponse, HttpStatus.NOT_FOUND);
+				return new ResponseEntity<ListOfUsersResponseDTO>(listOfUsersResponse,HttpStatus.INTERNAL_SERVER_ERROR);
 			}
-		} else {
-			listOfUsers = null;
-			listOfUsersResponse.setSuccess(false);
-			listOfUsersResponse.setMessage("You're not an Admin user, trying to access all users info.");
-			listOfUsersResponse.setUsers(null);
-			return new ResponseEntity<ListOfUsersResponseDTO>(listOfUsersResponse, HttpStatus.FORBIDDEN);
-		}
 	}
 	
 	@SuppressWarnings("unused")
@@ -142,52 +153,59 @@ public class AdminController {
 	public ResponseEntity<UserInfoResponse> updateUserRoleToAdminById(
 			@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) @Parameter(hidden = true) String authorizationHeader,
 			@PathVariable("id") Long id) {
-		UserInfoResponse userInfoResponse = new UserInfoResponse();
-		UserInfo userInfo = new UserInfo();
-		String username = loggedInUsername.getUsernameFromLoggedInToken(authorizationHeader);
-		if (username.equals("Invalid Token")) {
-			return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-		}
-		User user = userService.getUserInfoById(id);
-		Role role = user.getRoles();
-		User user1 = userService.getUserInfo();
-		if (user != null) {
-			User updatedUser = null;
-			if(user1.getRoles().equals(Role.ADMIN)) {
-				 updatedUser = userService.updateUserRoleToAdminById(id);
+			UserInfoResponse userInfoResponse = new UserInfoResponse();
+			try {
+				UserInfo userInfo = new UserInfo();
+				String username = loggedInUsername.getUsernameFromLoggedInToken(authorizationHeader);
+				if (username.equals("Invalid Token")) {
+					return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+				}
+				CompletableFuture<User> cfu = userService.getUserInfoById(id);
+				User user = cfu.get();
+				Role role = user.getRoles();
+				CompletableFuture<User> cfu1 = userService.getUserInfo();
+				User user1 = cfu1.get();
+				if (user != null) {
+					User updatedUser = null;
+					if(user1.getRoles().equals(Role.ADMIN)) {
+						 CompletableFuture<User> cfu2 = userService.updateUserRoleToAdminById(id);
+						 updatedUser = cfu2.get();
+					} else {
+						userInfoResponse.setSuccess(false);
+						userInfoResponse.setMessage("You're not an Admin User, trying to update other user role to Admin.");
+						return new ResponseEntity<UserInfoResponse>(userInfoResponse, HttpStatus.FORBIDDEN);
+					}
+					if(updatedUser != null && role.equals(Role.USER)) {
+						userInfo.setId(updatedUser.getId());
+						userInfo.setUsername(updatedUser.getUsername());
+						userInfo.setRole(updatedUser.getRoles());
+						userInfoResponse.setSuccess(true);
+						userInfoResponse.setMessage("Role of User with id: " + id + " is updated successfully.");
+						userInfoResponse.setUserInfo(userInfo);
+						return new ResponseEntity<UserInfoResponse>(userInfoResponse, HttpStatus.OK);
+					} else {
+						userInfo.setId(user.getId());
+						userInfo.setUsername(user.getUsername());
+						userInfo.setRole(user.getRoles());
+						userInfoResponse.setSuccess(false);
+						userInfoResponse.setMessage("User with id: "+ id + " is already admin.");
+						userInfoResponse.setUserInfo(userInfo);
+						return new ResponseEntity<UserInfoResponse>(userInfoResponse, HttpStatus.NOT_FOUND);
+					}
+				} else {
+					userInfoResponse.setSuccess(false);
+					userInfoResponse.setMessage("User not found.");
+					userInfoResponse.setUserInfo(null);
+					return new ResponseEntity<UserInfoResponse>(userInfoResponse, HttpStatus.NOT_FOUND);
+				}
 			}
-			else {
-				userInfo = null;
+			catch (Exception e) {
+				e.printStackTrace();
 				userInfoResponse.setSuccess(false);
-				userInfoResponse.setMessage("You're not an Admin User, trying to update other user role to Admin.");
+				userInfoResponse.setMessage(e.getMessage());
 				userInfoResponse.setUserInfo(null);
-				return new ResponseEntity<UserInfoResponse>(userInfoResponse, HttpStatus.FORBIDDEN);
+				return new ResponseEntity<UserInfoResponse>(userInfoResponse, HttpStatus.INTERNAL_SERVER_ERROR);
 			}
-			if(updatedUser != null && role.equals(Role.USER)) {
-				userInfo.setId(updatedUser.getId());
-				userInfo.setUsername(updatedUser.getUsername());
-				userInfo.setRole(updatedUser.getRoles());
-				userInfoResponse.setSuccess(true);
-				userInfoResponse.setMessage("Role of User with id: " + id + " is updated successfully.");
-				userInfoResponse.setUserInfo(userInfo);
-				return new ResponseEntity<UserInfoResponse>(userInfoResponse, HttpStatus.OK);
-			}
-			else {
-				userInfo.setId(user.getId());
-				userInfo.setUsername(user.getUsername());
-				userInfo.setRole(user.getRoles());
-				userInfoResponse.setSuccess(false);
-				userInfoResponse.setMessage("User with id: "+ id + " is already admin.");
-				userInfoResponse.setUserInfo(userInfo);
-				return new ResponseEntity<UserInfoResponse>(userInfoResponse, HttpStatus.NOT_FOUND);
-			}
-		} else {
-			userInfo = null;
-			userInfoResponse.setSuccess(false);
-			userInfoResponse.setMessage("User not found.");
-			userInfoResponse.setUserInfo(null);
-			return new ResponseEntity<UserInfoResponse>(userInfoResponse, HttpStatus.NOT_FOUND);
-		}
 	}
 	
 	@SuppressWarnings("unused")
@@ -209,53 +227,58 @@ public class AdminController {
 	public ResponseEntity<UserInfoResponse> updateUserRoleToUserById(
 			@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) @Parameter(hidden = true) String authorizationHeader,
 			@PathVariable("id") Long id) {
-		UserInfoResponse userInfoResponse = new UserInfoResponse();
-		UserInfo userInfo = new UserInfo();
-		String username = loggedInUsername.getUsernameFromLoggedInToken(authorizationHeader);
-		if (username.equals("Invalid Token")) {
-			return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-		}
-		User user = userService.getUserInfoById(id);
-		Role role = user.getRoles();
-		User user1 = userService.getUserInfo();
-		if (user != null) {
-			User updatedUser = null;
-			if(user1.getRoles().equals(Role.ADMIN)) {
-				 updatedUser = userService.updateUserRoleToUserById(id);
+			UserInfoResponse userInfoResponse = new UserInfoResponse();
+			try {
+				UserInfo userInfo = new UserInfo();
+				String username = loggedInUsername.getUsernameFromLoggedInToken(authorizationHeader);
+				if (username.equals("Invalid Token")) {
+					return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+				}
+				CompletableFuture<User> cfu = userService.getUserInfoById(id);
+				User user = cfu.get();
+				Role role = user.getRoles();
+				CompletableFuture<User> cfu1 = userService.getUserInfo();
+				User user1 = cfu1.get();
+				if (user != null) {
+					User updatedUser = null;
+					if(user1.getRoles().equals(Role.ADMIN)) {
+						 CompletableFuture<User> cfu2 = userService.updateUserRoleToUserById(id);
+						 updatedUser = cfu2.get();
+					} else {
+						userInfoResponse.setSuccess(false);
+						userInfoResponse.setMessage("You're not an Admin User, trying to update other user role to User.");
+						return new ResponseEntity<UserInfoResponse>(userInfoResponse, HttpStatus.FORBIDDEN);
+					}
+					if(updatedUser != null && role.equals(Role.ADMIN)) {
+						userInfo.setId(updatedUser.getId());
+						userInfo.setUsername(updatedUser.getUsername());
+						userInfo.setRole(updatedUser.getRoles());
+						userInfoResponse.setSuccess(true);
+						userInfoResponse.setMessage("Role of User with id: " + id + " is updated successfully.");
+						userInfoResponse.setUserInfo(userInfo);
+						return new ResponseEntity<UserInfoResponse>(userInfoResponse, HttpStatus.OK);
+					} else {
+						userInfo.setId(user.getId());
+						userInfo.setUsername(user.getUsername());
+						userInfo.setRole(user.getRoles());
+						userInfoResponse.setSuccess(false);
+						userInfoResponse.setMessage("User with id: "+ id + " is already a normal user.");
+						userInfoResponse.setUserInfo(userInfo);
+						return new ResponseEntity<UserInfoResponse>(userInfoResponse, HttpStatus.NOT_FOUND);
+					}
+				} else {
+					userInfoResponse.setSuccess(false);
+					userInfoResponse.setMessage("User not found.");
+					userInfoResponse.setUserInfo(null);
+					return new ResponseEntity<UserInfoResponse>(userInfoResponse, HttpStatus.NOT_FOUND);
+				}
 			}
-			else {
-				userInfo = null;
+			catch(Exception e) {
 				userInfoResponse.setSuccess(false);
-				userInfoResponse.setMessage("You're not an Admin User, trying to update other user role to User.");
+				userInfoResponse.setMessage(e.getMessage());
 				userInfoResponse.setUserInfo(null);
-				return new ResponseEntity<UserInfoResponse>(userInfoResponse, HttpStatus.FORBIDDEN);
+				return new ResponseEntity<UserInfoResponse>(userInfoResponse, HttpStatus.INTERNAL_SERVER_ERROR);
 			}
-			if(updatedUser != null && role.equals(Role.ADMIN)) {
-				userInfo.setId(updatedUser.getId());
-				userInfo.setUsername(updatedUser.getUsername());
-				userInfo.setRole(updatedUser.getRoles());
-				userInfoResponse.setSuccess(true);
-				userInfoResponse.setMessage("Role of User with id: " + id + " is updated successfully.");
-				userInfoResponse.setUserInfo(userInfo);
-				return new ResponseEntity<UserInfoResponse>(userInfoResponse, HttpStatus.OK);
-			}
-			else {
-				userInfo.setId(user.getId());
-				userInfo.setUsername(user.getUsername());
-				userInfo.setRole(user.getRoles());
-				userInfoResponse.setSuccess(false);
-				userInfoResponse.setMessage("User with id: "+ id + " is already a normal user.");
-				userInfoResponse.setUserInfo(userInfo);
-				return new ResponseEntity<UserInfoResponse>(userInfoResponse, HttpStatus.NOT_FOUND);
-			}
-		} 
-		else {
-			userInfo = null;
-			userInfoResponse.setSuccess(false);
-			userInfoResponse.setMessage("User not found.");
-			userInfoResponse.setUserInfo(null);
-			return new ResponseEntity<UserInfoResponse>(userInfoResponse, HttpStatus.NOT_FOUND);
-		}
 	}
 	
 	@Operation(
@@ -276,35 +299,43 @@ public class AdminController {
 	public ResponseEntity<UserInfoResponse> deleteUserById(
 			@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) @Parameter(hidden = true) String authorizationHeader,
 			@PathVariable("id") Long id) {
-		UserInfoResponse userInfoResponse = new UserInfoResponse();
-		String username = loggedInUsername.getUsernameFromLoggedInToken(authorizationHeader);
-		if (username.equals("Invalid Token")) {
-			return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-		}
-		HttpEntity<String> entity = authorizeHeaders(authorizationHeader);
-		User user = userService.getUserInfoById(id);
-		User user1 = userService.getUserInfo();
-		if (user != null && user.getId() != user1.getId()) {
-			if(user1.getRoles().equals(Role.ADMIN)) {
-				getResponseOfDeletedUserBlogs(entity, id);
-				userService.deleteUserById(id);
-				userInfoResponse.setSuccess(true);
-				userInfoResponse.setMessage("User with id:"+id+" is deleted successfully.");
-				userInfoResponse.setUserInfo(null);
-				return new ResponseEntity<UserInfoResponse>(userInfoResponse, HttpStatus.OK);
+			UserInfoResponse userInfoResponse = new UserInfoResponse();
+			try {
+				String username = loggedInUsername.getUsernameFromLoggedInToken(authorizationHeader);
+				if (username.equals("Invalid Token")) {
+					return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+				}
+				HttpEntity<String> entity = authorizeHeaders(authorizationHeader);
+				CompletableFuture<User> cfu = userService.getUserInfoById(id);
+				User user = cfu.get();
+				CompletableFuture<User> cfu1 = userService.getUserInfo();
+				User user1 = cfu1.get();
+				if (user != null && user.getId() != user1.getId()) {
+					if(user1.getRoles().equals(Role.ADMIN)) {
+						getResponseOfDeletedUserBlogs(entity, id);
+						userService.deleteUserById(id);
+						userInfoResponse.setSuccess(true);
+						userInfoResponse.setMessage("User with id:"+id+" is deleted successfully.");
+						userInfoResponse.setUserInfo(null);
+						return new ResponseEntity<UserInfoResponse>(userInfoResponse, HttpStatus.OK);
+					} else {
+						userInfoResponse.setSuccess(false);
+						userInfoResponse.setMessage("You're not an Admin User, trying to update other user role to User.");
+						userInfoResponse.setUserInfo(null);
+						return new ResponseEntity<UserInfoResponse>(userInfoResponse, HttpStatus.FORBIDDEN);
+					}
+				} else {
+					userInfoResponse.setSuccess(false);
+					userInfoResponse.setMessage("User not found. Or you're trying to delete yourself.");
+					userInfoResponse.setUserInfo(null);
+					return new ResponseEntity<UserInfoResponse>(userInfoResponse, HttpStatus.NOT_FOUND);
+				}
 			}
-			else {
+			catch(Exception e) {
 				userInfoResponse.setSuccess(false);
-				userInfoResponse.setMessage("You're not an Admin User, trying to update other user role to User.");
+				userInfoResponse.setMessage(e.getMessage());
 				userInfoResponse.setUserInfo(null);
-				return new ResponseEntity<UserInfoResponse>(userInfoResponse, HttpStatus.FORBIDDEN);
+				return new ResponseEntity<UserInfoResponse>(userInfoResponse, HttpStatus.INTERNAL_SERVER_ERROR);
 			}
-		} else {
-			userInfoResponse.setSuccess(false);
-			userInfoResponse.setMessage("User not found. Or you're trying to delete yourself.");
-			userInfoResponse.setUserInfo(null);
-			return new ResponseEntity<UserInfoResponse>(userInfoResponse, HttpStatus.NOT_FOUND);
-		}
 	}
-
 }

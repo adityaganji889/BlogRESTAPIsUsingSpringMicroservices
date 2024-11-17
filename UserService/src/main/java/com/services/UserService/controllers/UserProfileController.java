@@ -1,18 +1,25 @@
 package com.services.UserService.controllers;
 
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.request.async.DeferredResult;
 
+import com.services.UserService.dtos.LoggedInResponse;
 import com.services.UserService.dtos.UserInfo;
 import com.services.UserService.dtos.UserInfoResponse;
 import com.services.UserService.entities.User;
@@ -32,6 +39,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @CrossOrigin("*")
 @SecurityRequirement(name = "BearerAuth") // Should match the SecurityScheme name
 @Tag(name = "User APIs", description = "APIs for user profile management, including fetching and updating user details.")
+//@PreAuthorize("hasAnyAuthority('USER', 'ADMIN')") // Secures all methods in this controller
 public class UserProfileController {
 
 	@Autowired
@@ -40,81 +48,91 @@ public class UserProfileController {
 	@Autowired
 	private LoggedInUsernameExtractionUtil loggedInUsername;
 
-	@Operation(
-			summary = "Get logged-in user details",
-			description = "Fetches details of the currently logged-in user.",
-			responses = {
-				@ApiResponse(responseCode = "200", description = "Logged-in user info fetched successfully",
-					content = @Content(schema = @Schema(implementation = UserInfoResponse.class))),
-				@ApiResponse(responseCode = "401", description = "Unauthorized - Invalid token", content = @Content),
-				@ApiResponse(responseCode = "404", description = "User not found", content = @Content)
-			}
-		)
+	@Operation(summary = "Get logged-in user details", description = "Fetches details of the currently logged-in user.", responses = {
+			@ApiResponse(responseCode = "200", description = "Logged-in user info fetched successfully", content = @Content(schema = @Schema(implementation = UserInfoResponse.class))),
+			@ApiResponse(responseCode = "401", description = "Unauthorized - Invalid token", content = @Content),
+			@ApiResponse(responseCode = "404", description = "User not found", content = @Content(schema = @Schema(implementation = UserInfoResponse.class))),
+			@ApiResponse(responseCode = "500", description = "Internal Server Error - Error occurred during fetching logged in user details", content = @Content(schema = @Schema(implementation = UserInfoResponse.class))), })
 	@GetMapping("/userDetails")
-	public ResponseEntity<UserInfoResponse> getUserDetails(
-			@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) @Parameter(hidden = true) String authorizationHeader) {
-		UserInfoResponse userInfoResponse = new UserInfoResponse();
-		UserInfo userInfo = new UserInfo();
-		String username = loggedInUsername.getUsernameFromLoggedInToken(authorizationHeader);
-		if (username.equals("Invalid Token")) {
-			return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-		}
-		Optional<User> user = userService.findByUsername(username);
-		if (user.isPresent()) {
-			userInfo.setId(user.get().getId());
-			userInfo.setUsername(user.get().getUsername());
-			userInfo.setRole(user.get().getRoles());
-			userInfoResponse.setSuccess(true);
-			userInfoResponse.setMessage("Logged in user info fetched successfully.");
-			userInfoResponse.setUserInfo(userInfo);
-			return new ResponseEntity<UserInfoResponse>(userInfoResponse, HttpStatus.OK);
-		} else {
-			userInfo = null;
-			userInfoResponse.setSuccess(false);
-			userInfoResponse.setMessage("User not found.");
-			userInfoResponse.setUserInfo(null);
-			return new ResponseEntity<UserInfoResponse>(userInfoResponse, HttpStatus.NOT_FOUND);
-		}
-	}
+    public ResponseEntity<UserInfoResponse> getUserDetails(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) 
+            @Parameter(hidden = true) String authorizationHeader) {
+        
+		 String username = loggedInUsername.getUsernameFromLoggedInToken(authorizationHeader);
+		    if ("Invalid Token".equals(username)) {
+		        return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+		    }
 
-	@Operation(
-			summary = "Get user details by ID",
-			description = "Fetches details of a user by their ID.",
-			parameters = {
-				@Parameter(name = "id", description = "ID of the user to fetch", required = true)
-			},
-			responses = {
-				@ApiResponse(responseCode = "200", description = "User info with specified ID fetched successfully",
-					content = @Content(schema = @Schema(implementation = UserInfoResponse.class))),
-				@ApiResponse(responseCode = "401", description = "Unauthorized - Invalid token", content = @Content),
-				@ApiResponse(responseCode = "404", description = "User not found", content = @Content)
-			}
-		)
+		    // Call getUserInfo asynchronously and return CompletableFuture directly
+		    CompletableFuture<User> cfu =  userService.getUserInfo();
+		    User user = null;
+		    try {
+		    	user = cfu.get();
+		    }
+		    catch(Exception e) {
+		    	e.printStackTrace();
+		    }
+		    UserInfoResponse userInfoResponse = new UserInfoResponse();
+		    
+	        if (user != null) {
+	            UserInfo userInfo = new UserInfo();
+	            userInfo.setId(user.getId());
+	            userInfo.setUsername(user.getUsername());
+	            userInfo.setRole(user.getRoles());
+	            userInfoResponse.setSuccess(true);
+	            userInfoResponse.setMessage("User info fetched successfully.");
+	            userInfoResponse.setUserInfo(userInfo);
+	            return new ResponseEntity<>(userInfoResponse, HttpStatus.OK);
+	        } else {
+	            userInfoResponse.setSuccess(false);
+	            userInfoResponse.setMessage("User not found.");
+	            userInfoResponse.setUserInfo(null);
+	            return new ResponseEntity<>(userInfoResponse, HttpStatus.NOT_FOUND);
+	        }
+		        
+    }
+
+	@Operation(summary = "Get user details by ID", description = "Fetches details of a user by their ID.", parameters = {
+			@Parameter(name = "id", description = "ID of the user to fetch", required = true) }, responses = {
+					@ApiResponse(responseCode = "200", description = "User info with specified ID fetched successfully", content = @Content(schema = @Schema(implementation = UserInfoResponse.class))),
+					@ApiResponse(responseCode = "401", description = "Unauthorized - Invalid token", content = @Content),
+					@ApiResponse(responseCode = "404", description = "User not found", content = @Content),
+					@ApiResponse(responseCode = "500", description = "Internal Server Error - Error occurred during fetching user details by id", content = @Content(schema = @Schema(implementation = UserInfoResponse.class))), })
 	@GetMapping("/userDetails/{id}")
 	public ResponseEntity<UserInfoResponse> getUserDetailsById(
 			@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) @Parameter(hidden = true) String authorizationHeader,
 			@PathVariable("id") Long id) {
 		UserInfoResponse userInfoResponse = new UserInfoResponse();
-		UserInfo userInfo = new UserInfo();
 		String username = loggedInUsername.getUsernameFromLoggedInToken(authorizationHeader);
-		if (username.equals("Invalid Token")) {
+		if ("Invalid Token".equals(username)) {
 			return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
 		}
-		User user = userService.getUserInfoById(id);
+
+		CompletableFuture<User> cfu = userService.getUserInfoById(id);
+		User user = null;
+		try {
+			user = cfu.get();
+		} catch (Exception e) {
+			e.printStackTrace();
+			userInfoResponse.setSuccess(false);
+			userInfoResponse.setMessage(e.getMessage());
+			userInfoResponse.setUserInfo(null);
+			return new ResponseEntity<>(userInfoResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+		}
 		if (user != null) {
+			UserInfo userInfo = new UserInfo();
 			userInfo.setId(user.getId());
 			userInfo.setUsername(user.getUsername());
 			userInfo.setRole(user.getRoles());
 			userInfoResponse.setSuccess(true);
 			userInfoResponse.setMessage("User info with id: " + id + " fetched successfully.");
 			userInfoResponse.setUserInfo(userInfo);
-			return new ResponseEntity<UserInfoResponse>(userInfoResponse, HttpStatus.OK);
+			return new ResponseEntity<>(userInfoResponse, HttpStatus.OK);
 		} else {
-			userInfo = null;
 			userInfoResponse.setSuccess(false);
 			userInfoResponse.setMessage("User not found.");
 			userInfoResponse.setUserInfo(null);
-			return new ResponseEntity<UserInfoResponse>(userInfoResponse, HttpStatus.NOT_FOUND);
+			return new ResponseEntity<>(userInfoResponse, HttpStatus.NOT_FOUND);
 		}
 
 	}

@@ -1,0 +1,25 @@
+package com.services.UserService.config;
+
+import org.springframework.security.concurrent.DelegatingSecurityContextRunnable;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+
+public class CustomThreadPoolTaskExecutor extends ThreadPoolTaskExecutor {
+
+    @Override
+    public void execute(Runnable task) {
+        super.execute(new DelegatingSecurityContextRunnable(task));
+    }
+
+    @Override
+    public void execute(Runnable task, long startTimeout) {
+        // This method is deprecated; consider removing or replacing with execute(Runnable, long, TimeUnit)
+        super.execute(new DelegatingSecurityContextRunnable(task), startTimeout);
+    }
+
+    @Override
+    public void execute(Runnable task, long startTimeout, java.util.concurrent.TimeUnit timeUnit) {
+        super.execute(new DelegatingSecurityContextRunnable(task), startTimeout, timeUnit);
+    }
+
+    // You can override other execute methods if needed
+}

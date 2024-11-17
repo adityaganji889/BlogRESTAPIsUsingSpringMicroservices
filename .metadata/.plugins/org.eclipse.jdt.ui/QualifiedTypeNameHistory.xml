@@ -7,4 +7,6 @@
     <fullyQualifiedTypeName name="io.swagger.v3.oas.annotations.enums.SecuritySchemeIn"/>
     <fullyQualifiedTypeName name="com.services.UserService.entities.Role"/>
     <fullyQualifiedTypeName name="java.util.List"/>
+    <fullyQualifiedTypeName name="java.util.concurrent.CompletableFuture"/>
+    <fullyQualifiedTypeName name="org.springframework.http.HttpStatusCode"/>
 </qualifiedTypeNameHistroy>

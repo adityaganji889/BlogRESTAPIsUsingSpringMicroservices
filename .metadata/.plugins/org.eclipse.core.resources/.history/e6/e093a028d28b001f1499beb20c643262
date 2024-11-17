@@ -1,6 +1,0 @@
-spring:
-  cloud:
-    config:
-      uri: http://localhost:8083/USER-SERVICE/user/default
-  profiles:
-    active: user

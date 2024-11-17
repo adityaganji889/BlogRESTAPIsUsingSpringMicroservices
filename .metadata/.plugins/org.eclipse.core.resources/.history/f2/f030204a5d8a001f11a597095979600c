@@ -1,5 +1,0 @@
-package com.services.APIGateway.config;
-
-public class RestTemplateConfig {
-
-}

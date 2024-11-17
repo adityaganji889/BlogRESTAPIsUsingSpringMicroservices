@@ -1,2 +1,4 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<typeInfoHistroy/>
+<typeInfoHistroy>
+    <typeInfo handle="=UserService/C:\/Users\/ADITYA\/.m2\/repository\/org\/springframework\/security\/spring-security-core\/6.2.6\/spring-security-core-6.2.6.jar=/maven.pomderived=/true=/=/maven.groupId=/org.springframework.security=/=/maven.artifactId=/spring-security-core=/=/maven.version=/6.2.6=/=/maven.scope=/compile=/=/maven.pomderived=/true=/&lt;org.springframework.security.concurrent(DelegatingSecurityContextRunnable.class[DelegatingSecurityContextRunnable" modifiers="49" timestamp="1727120833687"/>
+</typeInfoHistroy>

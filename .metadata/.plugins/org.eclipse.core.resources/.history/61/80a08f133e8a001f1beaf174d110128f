@@ -1,5 +1,0 @@
-package com.services.APIGateway.controllers;
-
-public class AuthController {
-
-}

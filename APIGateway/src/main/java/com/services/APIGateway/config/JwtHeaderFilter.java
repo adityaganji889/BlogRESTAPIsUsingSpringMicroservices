@@ -27,13 +27,13 @@ public class JwtHeaderFilter extends AbstractGatewayFilterFactory<JwtHeaderFilte
     @Override
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> {
-            String jwtToken = exchange.getRequest().getHeaders().getFirst("Authorization");
-            
+            String jwtToken = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
          // If the token is not present, check if it's stored for the user
             if (jwtToken == null) {
                 String username = exchange.getRequest().getHeaders().getFirst("X-Username"); // Assuming username is sent
                 if (username != null) {
                     jwtToken = tokenStore.getToken(username);
+                    System.out.println("Retrieved token for user: " + username);
                 }
             }
             // You might want to check if jwtToken is not null or empty

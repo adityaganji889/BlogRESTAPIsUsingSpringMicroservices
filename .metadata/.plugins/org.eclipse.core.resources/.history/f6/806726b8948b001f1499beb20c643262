@@ -1,5 +1,0 @@
-package com.services.ConfigService.controllers;
-
-public class ConfigController {
-
-}

@@ -1,24 +1,25 @@
 package com.services.BlogService.services;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import com.services.BlogService.dtos.BlogRequestDTO;
 import com.services.BlogService.entities.Blog;
 
 public interface BlogService {
 
-    List<Blog> getAllBlogs();
+    CompletableFuture<List<Blog>> getAllBlogs();
     
-    List<Blog> getAllBlogsOfAuthor(Long authorId);
+    CompletableFuture<List<Blog>> getAllBlogsOfAuthor(Long authorId);
     
-    Blog getBlogById(String id);
+    CompletableFuture<Blog> getBlogById(String id);
     
-    Blog createBlog(BlogRequestDTO blogRequest, Long authorId);
+    CompletableFuture<Blog> createBlog(BlogRequestDTO blogRequest, Long authorId);
     
-    Blog updateBlog(BlogRequestDTO blogRequest, String id);
+    CompletableFuture<Blog> updateBlog(BlogRequestDTO blogRequest, String id);
     
-    String deleteBlog(String id);
+    CompletableFuture<String> deleteBlog(String id);
     
-    String deleteAllBlogsOfDeletedUsers(Long id);
+    CompletableFuture<String> deleteAllBlogsOfDeletedUsers(Long id);
 	
 }

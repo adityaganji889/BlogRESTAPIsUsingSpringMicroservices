@@ -1,6 +1,0 @@
-spring:
-  application:
-    name: USER-SERVICE
-  cloud:
-    config:
-      uri: lb://CONFIG-SERVICE 

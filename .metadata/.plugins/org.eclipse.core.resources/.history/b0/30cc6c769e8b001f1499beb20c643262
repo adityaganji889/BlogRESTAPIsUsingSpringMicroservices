@@ -1,6 +1,0 @@
-spring:
-  application:
-    name: USER-SERVICE
-  config:
-   import: lb://CONFIG-SERVICE
-   profile: user

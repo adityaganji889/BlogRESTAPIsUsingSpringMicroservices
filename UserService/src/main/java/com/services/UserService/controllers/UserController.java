@@ -1,10 +1,12 @@
 package com.services.UserService.controllers;
 
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+//import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,7 +25,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+//import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
@@ -49,19 +51,22 @@ public class UserController {
                 @ApiResponse(responseCode = "200", description = "User registered successfully", 
                              content = @Content(schema = @Schema(implementation = RegisteredResponse.class))),
                 @ApiResponse(responseCode = "400", description = "Invalid input data", 
-                             content = @Content)
+                             content = @Content),
+                @ApiResponse(responseCode = "500", description = "Internal Server Error - Error occurred during register", 
+                content = @Content(schema = @Schema(implementation = RegisteredResponse.class))),
             },
             security = {}
         )
     @PostMapping("/register")
     public ResponseEntity<RegisteredResponse> register(@RequestBody UserRegistrationRequest request) {
-        userService.registerNewUser(request);
-        RegisteredResponse registeredResponse = new RegisteredResponse();
-        registeredResponse.setSuccess(true);
-        registeredResponse.setMessage("User registered successfully");
-        registeredResponse.setUsername(request.getUsername());
-        registeredResponse.setRole(request.getRole());
-        return ResponseEntity.ok(registeredResponse);
+        // To make it async annotated controller with @EnableAsync, further added wrapped return type of this method in CompletableFuture<> and moved the synchronous code block to asynchronous code block wrapping it with return of CompletableFuture() object used thenApply, exceptionally methods in it.
+    		userService.registerNewUser(request);
+            RegisteredResponse registeredResponse = new RegisteredResponse();
+            registeredResponse.setSuccess(true);
+            registeredResponse.setMessage("User registered successfully");
+            registeredResponse.setUsername(request.getUsername());
+            registeredResponse.setRole(request.getRole());
+            return ResponseEntity.ok(registeredResponse);
     }
 
     @Operation(
@@ -75,25 +80,39 @@ public class UserController {
                 @ApiResponse(responseCode = "200", description = "User logged in successfully", 
                              content = @Content(schema = @Schema(implementation = LoggedInResponse.class))),
                 @ApiResponse(responseCode = "401", description = "Unauthorized - Invalid credentials", 
-                             content = @Content)
+                             content = @Content),
+                @ApiResponse(responseCode = "500", description = "Internal Server Error - Error occurred during login", 
+                content = @Content(schema = @Schema(implementation = LoggedInResponse.class))),
             },
             security = {}
         )
     @PostMapping("/authenticate")
     public ResponseEntity<LoggedInResponse> authenticate(@RequestBody LoginRequest request) {
-        Optional<User> userp = userService.findByUsername(request.getUsername());
-        LoggedInResponse loggedInResponse = new LoggedInResponse();
-        if(userp.isPresent()) {
-        	User user = userp.get();
-        	if (user != null && userService.getPasswordEncoder().matches(request.getPassword(), user.getPassword())) {
-                String token = jwtUtil.generateToken(user);
-                loggedInResponse.setToken(token);
-                loggedInResponse.setMessage("Your logged in successfully.");
-                loggedInResponse.setSuccess(true);
-                loggedInResponse.setUsername(request.getUsername());
-                return ResponseEntity.ok(loggedInResponse);
+        	LoggedInResponse loggedInResponse = new LoggedInResponse();
+        	try {
+            	CompletableFuture<Optional<User>> cfu = userService.findByUsername(request.getUsername());
+            	Optional<User> userp = cfu.get();
+                if (userp.isPresent()) {
+                    User user = userp.get();
+                    if (user != null && userService.getPasswordEncoder().matches(request.getPassword(), user.getPassword())) {
+                        String token = jwtUtil.generateToken(user);
+                        loggedInResponse.setToken(token);
+                        loggedInResponse.setMessage("You logged in successfully.");
+                        loggedInResponse.setSuccess(true);
+                        loggedInResponse.setUsername(request.getUsername());
+                        return ResponseEntity.ok(loggedInResponse);
+                    }
+                }
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             }
-        }
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            catch(Exception e) {
+            	e.printStackTrace();
+            	loggedInResponse.setToken(null);
+                loggedInResponse.setMessage(e.getMessage());
+                loggedInResponse.setSuccess(false);
+                loggedInResponse.setUsername(null);
+                return new ResponseEntity<LoggedInResponse>(loggedInResponse,HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        
     }
 }

@@ -2,6 +2,7 @@ package com.services.BlogService.controllers;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
@@ -64,26 +65,30 @@ public class BlogController {
 		return entity;
 	}
 
-	public UserInfoResponse getLoggedInUserInfo(HttpEntity<String> entity) {
-		UserInfoResponse userInfoResponse = new UserInfoResponse();
-		try {
-			userInfoResponse = restTemplate.exchange("http://USER-SERVICE/api/userProfile/userDetails", HttpMethod.GET,
-					entity, UserInfoResponse.class).getBody();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return userInfoResponse;
+	public CompletableFuture<UserInfoResponse> getLoggedInUserInfo(HttpEntity<String> entity) {
+		return CompletableFuture.supplyAsync(() -> {
+			UserInfoResponse userInfoResponse = new UserInfoResponse();
+			try {
+				userInfoResponse = restTemplate.exchange("http://USER-SERVICE/api/userProfile/userDetails", HttpMethod.GET,
+						entity, UserInfoResponse.class).getBody();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			return userInfoResponse;
+		});
 	}
 
-	public UserInfoResponse getUserInfoByUserId(HttpEntity<String> entity, Long id) {
-		UserInfoResponse userInfoResponse = new UserInfoResponse();
-		try {
-			userInfoResponse = restTemplate.exchange("http://USER-SERVICE/api/userProfile/userDetails/" + id,
-					HttpMethod.GET, entity, UserInfoResponse.class).getBody();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return userInfoResponse;
+	public CompletableFuture<UserInfoResponse> getUserInfoByUserId(HttpEntity<String> entity, Long id) {
+		return CompletableFuture.supplyAsync(() -> {
+			UserInfoResponse userInfoResponse = new UserInfoResponse();
+			try {
+				userInfoResponse = restTemplate.exchange("http://USER-SERVICE/api/userProfile/userDetails/" + id,
+						HttpMethod.GET, entity, UserInfoResponse.class).getBody();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			return userInfoResponse;
+		});
 	}
 
 	@Operation(summary = "Get all blogs", description = "Fetches a list of all blogs.")
@@ -96,13 +101,27 @@ public class BlogController {
 	public ResponseEntity<BlogsListResponseDTO> getAllBlogs(
 			@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) @Parameter(hidden = true) String authorizationHeader) {
 		HttpEntity<String> entity = authorizeHeaders(authorizationHeader);
-		List<Blog> blogs = blogService.getAllBlogs();
+		CompletableFuture<List<Blog>> blogsList = blogService.getAllBlogs();
+		List<Blog> blogs = null;
+		try {
+			blogs = blogsList.get();
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+		}
 		BlogsListResponseDTO blogsResponse = new BlogsListResponseDTO();
 		List<BlogPopulatedResponse> populatedBlogs = new ArrayList<BlogPopulatedResponse>();
 		if (blogs != null) {
 			for (int i = 0; i < blogs.size(); i++) {
 				BlogPopulatedResponse populatedBlog = new BlogPopulatedResponse();
-				UserInfoResponse userInfo1 = getUserInfoByUserId(entity, blogs.get(i).getAuthorId());
+				CompletableFuture<UserInfoResponse> cfu = getUserInfoByUserId(entity, blogs.get(i).getAuthorId());
+				UserInfoResponse userInfo1 = null;
+				try {
+					userInfo1 = cfu.get();
+				}
+				catch(Exception e) {
+					e.printStackTrace();
+				}
 				BlogAuthor author = new BlogAuthor();
 				author.setId(blogs.get(i).getAuthorId());
 				author.setUsername(userInfo1.getUserInfo().getUsername());
@@ -136,11 +155,25 @@ public class BlogController {
 			@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) @Parameter(hidden = true) String authorizationHeader,
 			@PathVariable("authorId") Long authorId) {
 		HttpEntity<String> entity = authorizeHeaders(authorizationHeader);
-		List<Blog> blogs = blogService.getAllBlogsOfAuthor(authorId);
+		CompletableFuture<List<Blog>> blogsList = blogService.getAllBlogsOfAuthor(authorId);
+		List<Blog> blogs = null;
+		try {
+			blogs = blogsList.get();
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+		}
 		BlogsOfAuthorListResponseDTO blogsResponse = new BlogsOfAuthorListResponseDTO();
 		List<BlogResponse> populatedBlogs = new ArrayList<BlogResponse>();
 		if (blogs != null) {
-			UserInfoResponse userInfo1 = getUserInfoByUserId(entity, authorId);
+			CompletableFuture<UserInfoResponse> cfu = getUserInfoByUserId(entity, authorId);
+			UserInfoResponse userInfo1 = null;
+			try {
+				userInfo1 = cfu.get();
+			}
+			catch(Exception e) {
+				e.printStackTrace();
+			}
 			BlogAuthor author = new BlogAuthor();
 			author.setId(authorId);
 			author.setUsername(userInfo1.getUserInfo().getUsername());
@@ -177,8 +210,22 @@ public class BlogController {
 			@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) @Parameter(hidden = true) String authorizationHeader,
 			@RequestBody BlogRequestDTO blogRequest) throws Exception {
 		HttpEntity<String> entity = authorizeHeaders(authorizationHeader);
-		UserInfoResponse author = getLoggedInUserInfo(entity);
-		Blog blog = blogService.createBlog(blogRequest, author.getUserInfo().getId());
+		CompletableFuture<UserInfoResponse> user = getLoggedInUserInfo(entity);
+		UserInfoResponse author = null;
+		try {
+			author = user.get();
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+		}
+		CompletableFuture<Blog> blog1 = blogService.createBlog(blogRequest, author.getUserInfo().getId());
+		Blog blog = null;
+		try {
+			blog = blog1.get();
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+		}
 		BlogPopulatedResponse blogsPopulatedResponse = new BlogPopulatedResponse();
 		BlogResponseDTO blogResponse = new BlogResponseDTO();
 		if (blog != null) {
@@ -213,13 +260,36 @@ public class BlogController {
 			@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) @Parameter(hidden = true) String authorizationHeader,
 			@PathVariable("id") String id) {
 		HttpEntity<String> entity = authorizeHeaders(authorizationHeader);
-		UserInfoResponse author = getLoggedInUserInfo(entity);
-		Blog blog = blogService.getBlogById(id);
+		CompletableFuture<UserInfoResponse> user = getLoggedInUserInfo(entity);
+		UserInfoResponse author = null;
+		try {
+			author = user.get();
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+		}
+		CompletableFuture<Blog> blog1 = blogService.getBlogById(id);
+		Blog blog = null;
+		try {
+			blog = blog1.get();
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+		}
+//		UserInfoResponse author = getLoggedInUserInfo(entity);
+//		Blog blog = blogService.getBlogById(id);
 		BlogPopulatedResponse blogsPopulatedResponse = new BlogPopulatedResponse();
 		BlogResponseDTO blogResponse = new BlogResponseDTO();
 		if (blog != null) {
 			BlogAuthor blogAuthor = new BlogAuthor();
-			UserInfoResponse originalAuthor = getUserInfoByUserId(entity, blog.getAuthorId());
+			CompletableFuture<UserInfoResponse> originalAuthor1 = getUserInfoByUserId(entity, blog.getAuthorId());
+			UserInfoResponse originalAuthor = null;
+			try {
+				originalAuthor = originalAuthor1.get();
+			}
+			catch(Exception e) {
+				e.printStackTrace();
+			}
 			blogAuthor.setId(originalAuthor.getUserInfo().getId());
 			blogAuthor.setUsername(originalAuthor.getUserInfo().getUsername());
 			blogAuthor.setRole(originalAuthor.getUserInfo().getRole());
@@ -252,18 +322,50 @@ public class BlogController {
 			@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) @Parameter(hidden = true) String authorizationHeader,
 			@PathVariable("id") String id, @RequestBody BlogRequestDTO blogRequest) {
 		HttpEntity<String> entity = authorizeHeaders(authorizationHeader);
-		UserInfoResponse author = getLoggedInUserInfo(entity);
-		Blog blog = blogService.getBlogById(id);
+//		UserInfoResponse author = getLoggedInUserInfo(entity);
+//		Blog blog = blogService.getBlogById(id);
+		CompletableFuture<UserInfoResponse> user = getLoggedInUserInfo(entity);
+		UserInfoResponse author = null;
+		try {
+			author = user.get();
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+		}
+		CompletableFuture<Blog> blog1 = blogService.getBlogById(id);
+		Blog blog = null;
+		try {
+			blog = blog1.get();
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+		}
 		BlogPopulatedResponse blogsPopulatedResponse = new BlogPopulatedResponse();
 		BlogResponseDTO blogResponse = new BlogResponseDTO();
 		if (blog != null) {
 			BlogAuthor blogAuthor = new BlogAuthor();
 			if ((blog.getAuthorId().equals(author.getUserInfo().getId()))
 					|| (author.getUserInfo().getRole().equals(Role.ADMIN))) {
-				Blog updatedBlog = blogService.updateBlog(blogRequest, id);
+				CompletableFuture<Blog> blog2 = blogService.updateBlog(blogRequest, id);
+				Blog updatedBlog = null;
+				try {
+					updatedBlog = blog2.get();
+				}
+				catch(Exception e) {
+					e.printStackTrace();
+				}
+//				Blog updatedBlog = blogService.updateBlog(blogRequest, id);
 				if ((author.getUserInfo().getRole().equals(Role.ADMIN))
 						&& (!blog.getAuthorId().equals(author.getUserInfo().getId()))) {
-					UserInfoResponse originalAuthor = getUserInfoByUserId(entity, blog.getAuthorId());
+					CompletableFuture<UserInfoResponse> originalAuthor1 = getUserInfoByUserId(entity, blog.getAuthorId());
+					UserInfoResponse originalAuthor = null;
+					try {
+						originalAuthor = originalAuthor1.get();
+					}
+					catch(Exception e) {
+						e.printStackTrace();
+					}
+//					UserInfoResponse originalAuthor = getUserInfoByUserId(entity, blog.getAuthorId());
 					blogAuthor.setId(originalAuthor.getUserInfo().getId());
 					blogAuthor.setUsername(originalAuthor.getUserInfo().getUsername());
 					blogAuthor.setRole(originalAuthor.getUserInfo().getRole());
@@ -306,13 +408,37 @@ public class BlogController {
 			@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) @Parameter(hidden = true) String authorizationHeader,
 			@PathVariable("id") String id) {
 		HttpEntity<String> entity = authorizeHeaders(authorizationHeader);
-		UserInfoResponse author = getLoggedInUserInfo(entity);
-		Blog blog = blogService.getBlogById(id);
+//		UserInfoResponse author = getLoggedInUserInfo(entity);
+//		Blog blog = blogService.getBlogById(id);
+		CompletableFuture<UserInfoResponse> user = getLoggedInUserInfo(entity);
+		UserInfoResponse author = null;
+		try {
+			author = user.get();
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+		}
+		CompletableFuture<Blog> blog1 = blogService.getBlogById(id);
+		Blog blog = null;
+		try {
+			blog = blog1.get();
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+		}
 		BlogResponseDTO blogResponse = new BlogResponseDTO();
 		if (blog != null) {
 			if ((blog.getAuthorId().equals(author.getUserInfo().getId()))
 					|| (author.getUserInfo().getRole().equals(Role.ADMIN))) {
-				String deletedBlog = blogService.deleteBlog(id);
+				CompletableFuture<String> deletedBlog1 = blogService.deleteBlog(id);
+				String deletedBlog = null;
+				try {
+				  deletedBlog = deletedBlog1.get();	
+				}
+				catch(Exception e) {
+				  e.printStackTrace();	
+				}
+//				String deletedBlog = blogService.deleteBlog(id);
 				if (deletedBlog != null) {
 					blogResponse.setSuccess(true);
 					blogResponse.setMessage("Blog with id:" + id + " deleted successfully.");
@@ -350,10 +476,25 @@ public class BlogController {
 			@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) @Parameter(hidden = true) String authorizationHeader,
 			@PathVariable("id") Long id) {
 		HttpEntity<String> entity = authorizeHeaders(authorizationHeader);
-		UserInfoResponse userInfo = getLoggedInUserInfo(entity);
+		CompletableFuture<UserInfoResponse> user = getLoggedInUserInfo(entity);
+		UserInfoResponse userInfo = null;
+		try {
+			userInfo = user.get();
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+		}
+//		UserInfoResponse userInfo = getLoggedInUserInfo(entity);
 		DefaultResponse defaultResponse = new DefaultResponse();
 		if (userInfo.getUserInfo().getRole().equals(Role.ADMIN)) {
-			blogService.deleteAllBlogsOfDeletedUsers(id);
+			CompletableFuture<String> deletedBlogsList = blogService.deleteAllBlogsOfDeletedUsers(id);
+			String deletedBlogs = null;
+			try {
+			  deletedBlogs = deletedBlogsList.get();
+			}
+			catch(Exception e) {
+			  e.printStackTrace();	
+			}
 			defaultResponse.setSuccess(true);
 			defaultResponse.setMessage("Blogs of deleted user with user id:" + id + " are deleted successfully.");
 			return new ResponseEntity<DefaultResponse>(defaultResponse, HttpStatus.OK);

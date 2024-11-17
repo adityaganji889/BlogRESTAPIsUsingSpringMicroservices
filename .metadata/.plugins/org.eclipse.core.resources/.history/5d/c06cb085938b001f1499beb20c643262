@@ -1,5 +1,0 @@
-package com.services.ConfigService.entities;
-
-public class ConfigProperty {
-
-}
