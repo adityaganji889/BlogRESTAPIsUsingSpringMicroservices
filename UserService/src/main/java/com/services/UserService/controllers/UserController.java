@@ -1,5 +1,7 @@
 package com.services.UserService.controllers;
 
+import java.time.Instant;
+import java.util.Date;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
@@ -8,20 +10,25 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 //import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.services.UserService.dtos.ChangePassword;
+import com.services.UserService.dtos.DefaultResponse;
 import com.services.UserService.dtos.LoggedInResponse;
 import com.services.UserService.dtos.LoginRequest;
 import com.services.UserService.dtos.RegisteredResponse;
 import com.services.UserService.dtos.UserRegistrationRequest;
+import com.services.UserService.entities.Otp;
 import com.services.UserService.entities.User;
 import com.services.UserService.services.UserService;
 import com.services.UserService.utils.JwtUtil;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -112,7 +119,142 @@ public class UserController {
                 loggedInResponse.setSuccess(false);
                 loggedInResponse.setUsername(null);
                 return new ResponseEntity<LoggedInResponse>(loggedInResponse,HttpStatus.INTERNAL_SERVER_ERROR);
-            }
-        
+            } 
     }
+    
+ // send mail for email verification
+    @Operation(
+            summary = "Verify Email",
+            description = "Sends an OTP to the provided email for verification.",
+            parameters = @Parameter(name = "email", description = "User email for verification", required = true),
+            responses = {
+                @ApiResponse(responseCode = "200", description = "Email containing OTP sent successfully", 
+                             content = @Content(schema = @Schema(implementation = DefaultResponse.class))),
+                @ApiResponse(responseCode = "404", description = "User not found with the provided email", 
+                             content = @Content),
+                @ApiResponse(responseCode = "500", description = "Internal Server Error", 
+                             content = @Content)
+            },
+            security = {}
+        )
+    @PostMapping("/verifyMail/{email}")
+    public ResponseEntity<DefaultResponse> verifyEmail(@PathVariable String email) {
+        CompletableFuture<Optional<User>> cfu = userService.findByUsername(email);
+        Optional<User> user = null;
+        try {
+        	user = cfu.get();
+        }
+        catch(Exception e) {
+        	e.printStackTrace();
+        }
+        if(user.isPresent()) {
+        	
+        	CompletableFuture<Otp> otpR = userService.verifyEmailSend(email, user.get());
+            Otp otp = null;
+            try {
+            	otp = otpR.get();
+            	return ResponseEntity.ok(new DefaultResponse(true,"Email containing OTP sent successfully to:"+ email +"for verification"));	
+            }
+            catch(Exception e) {
+            	e.printStackTrace();
+            	new ResponseEntity<>(new DefaultResponse(false, e.getMessage()),HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        }
+        return new ResponseEntity<>(new DefaultResponse(false, "User with the email id: "+email+" is not found"),HttpStatus.NOT_FOUND);
+    }
+
+    @Operation(
+            summary = "Verify OTP",
+            description = "Verifies the provided OTP against the user's email.",
+            parameters = {
+                @Parameter(name = "otp", description = "The OTP to verify", required = true),
+                @Parameter(name = "email", description = "User email associated with the OTP", required = true)
+            },
+            responses = {
+                @ApiResponse(responseCode = "200", description = "OTP verified successfully", 
+                             content = @Content(schema = @Schema(implementation = DefaultResponse.class))),
+                @ApiResponse(responseCode = "404", description = "OTP not found", 
+                             content = @Content),
+                @ApiResponse(responseCode = "417", description = "OTP has expired", 
+                             content = @Content),
+                @ApiResponse(responseCode = "500", description = "Internal Server Error", 
+                             content = @Content)
+            },
+            security = {}
+        )
+    @PostMapping("/verifyOtp/{otp}/{email}")
+    public ResponseEntity<DefaultResponse> verifyOtp(@PathVariable("otp") Integer otpValue, @PathVariable String email) {
+//        User user = userRepository.findByEmail(email)
+//                .orElseThrow(() -> new UsernameNotFoundException("Please provide an valid email!"));
+
+    	CompletableFuture<Optional<User>> cfu = userService.findByUsername(email);
+        Optional<User> user = null;
+        try {
+        	user = cfu.get();
+        }
+        catch(Exception e) {
+        	e.printStackTrace();
+        }
+        if(user.isPresent()) {
+        	CompletableFuture<Optional<Otp>> otpR = userService.findByOtpAndUser(otpValue, user.get());
+            Optional<Otp> otp = null;
+            try {
+            	otp = otpR.get();
+            }
+            catch(Exception e) {
+            	e.printStackTrace();
+            	new ResponseEntity<>(new DefaultResponse(false, e.getMessage()),HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+            
+            if (otp.get().getExpirationTime().before(Date.from(Instant.now()))) {
+                userService.deleteOtpById(otp.get().getFpid());
+                return new ResponseEntity<DefaultResponse>(new DefaultResponse(false, "OTP Has Expired"),HttpStatus.EXPECTATION_FAILED);
+            }
+            
+            userService.deleteOtpById(otp.get().getFpid());
+            return ResponseEntity.ok(new DefaultResponse(true,"OTP verified for email: "+ user.get().getUsername()+" successfully."));	
+        }
+
+        return new ResponseEntity<DefaultResponse>(new DefaultResponse(false, "OTP Not Found"),HttpStatus.NOT_FOUND);
+    }
+
+
+    @Operation(
+            summary = "Change Password",
+            description = "Changes the password for the user associated with the provided email.",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                description = "New password details",
+                content = @Content(schema = @Schema(implementation = ChangePassword.class))
+            ),
+            parameters = @Parameter(name = "email", description = "User email to change the password", required = true),
+            responses = {
+                @ApiResponse(responseCode = "200", description = "Password changed successfully", 
+                             content = @Content(schema = @Schema(implementation = DefaultResponse.class))),
+                @ApiResponse(responseCode = "417", description = "Passwords do not match", 
+                             content = @Content),
+                @ApiResponse(responseCode = "500", description = "Internal Server Error", 
+                             content = @Content)
+            }
+        )
+    @PostMapping("/changePassword/{email}")
+    public ResponseEntity<DefaultResponse> changePasswordHandler(@RequestBody ChangePassword changePassword,
+                                                        @PathVariable String email) {
+        
+        CompletableFuture<Boolean> cfu = userService.changePasswordHandle(email, changePassword.password(), changePassword.repeatPassword());
+        Boolean flag = false;
+        try {
+        	flag = cfu.get();	
+        }
+        catch(Exception e) {
+        	e.printStackTrace();
+        	new ResponseEntity<>(new DefaultResponse(false, e.getMessage()),HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        if(flag) {
+        	return ResponseEntity.ok(new DefaultResponse(true,"Password is resetted for email: "+email+" successfully."));
+        }
+        else {
+        	return new ResponseEntity<DefaultResponse>(new DefaultResponse(false,"Please enter the password again!"), HttpStatus.EXPECTATION_FAILED);
+        }
+    }
+
 }

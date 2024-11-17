@@ -11,6 +11,9 @@ spring:
     password: root
   config:
     import: optional:configserver:lb://CONFIG-SERVICE/USER-SERVICE/user/default
+  jpa:
+    hibernate:
+      ddl-auto: update
  
 springdoc:
   api-docs:

@@ -32,6 +32,7 @@ public class BlogServiceImpl implements BlogService {
 	}
 
 	@Override
+	@Async("asyncTaskExecutor")
 	public CompletableFuture<List<Blog>> getAllBlogsOfAuthor(Long authorId) {
 		// TODO Auto-generated method stub
 	    return CompletableFuture.supplyAsync(() -> {
@@ -44,6 +45,7 @@ public class BlogServiceImpl implements BlogService {
 	}
 
 	@Override
+	@Async("asyncTaskExecutor")
 	public CompletableFuture<Blog> getBlogById(String id) {
 		// TODO Auto-generated method stub
 		return CompletableFuture.supplyAsync(()->{
@@ -56,6 +58,7 @@ public class BlogServiceImpl implements BlogService {
 	}
 
 	@Override
+	@Async("asyncTaskExecutor")
 	public CompletableFuture<Blog> createBlog(BlogRequestDTO blogRequest,Long authorId) {
 		// TODO Auto-generated method stub
 		return CompletableFuture.supplyAsync(()-> {
@@ -69,6 +72,7 @@ public class BlogServiceImpl implements BlogService {
 	}
 
 	@Override
+	@Async("asyncTaskExecutor")
 	public CompletableFuture<Blog> updateBlog(BlogRequestDTO blogRequest, String id) {
 		// TODO Auto-generated method stub
 		return CompletableFuture.supplyAsync(()->{
@@ -84,6 +88,7 @@ public class BlogServiceImpl implements BlogService {
 	}
 
 	@Override
+	@Async("asyncTaskExecutor")
 	public CompletableFuture<String> deleteBlog(String id) {
 		// TODO Auto-generated method stub
 		return CompletableFuture.supplyAsync(()->{
@@ -97,6 +102,7 @@ public class BlogServiceImpl implements BlogService {
 	}
 
 	@Override
+	@Async("asyncTaskExecutor")
 	public CompletableFuture<String> deleteAllBlogsOfDeletedUsers(Long id) {
 		// TODO Auto-generated method stub
 		return CompletableFuture.supplyAsync(()->{

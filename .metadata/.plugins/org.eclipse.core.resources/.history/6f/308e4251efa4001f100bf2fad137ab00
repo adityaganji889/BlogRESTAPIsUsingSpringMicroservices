@@ -1,0 +1,8 @@
+package com.services.UserService.repositories;
+
+
+public interface OtpRepository extends JpaRepository<Otp, Integer> {
+
+    @Query("select fp from ForgotPassword fp where fp.otp = ?1 and fp.user = ?2")
+    Optional<Otp> findByOtpAndUser(Integer otp, User user);
+}
