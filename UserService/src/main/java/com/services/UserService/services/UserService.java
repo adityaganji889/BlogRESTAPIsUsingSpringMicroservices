@@ -238,15 +238,20 @@ public class UserService {
 		return CompletableFuture.supplyAsync(() -> {
 			int otp = otpGenerator();
 			MailBody mailBody = MailBody.builder().to(email)
-					.text("This is the OTP for your Forgot Password request : " + otp +" is valid till next 10 minutes.")
-					.subject("OTP for Forgot Password request").build();
+					.text("This is the OTP for your Forgot Password/Verify Email request : " + otp +" is valid till next 10 minutes.")
+					.subject("OTP for Forgot Password/Verify Email request").build();
 
 			Otp fp = Otp.builder().otpValue(otp).expirationTime(new Date(System.currentTimeMillis() + 10 * 60 * 1000))
 					.user(user).build();
-
-			emailService.sendSimpleMessage(mailBody);
-			Otp newOtp = otpRepository.save(fp);
+            
+			//SMTP Render Mail changes starts
+			String token = emailService.sendSimpleMessage(mailBody, user.getId()); //SMTP Render Mail changes
+			Otp newOtp = null;
+			if(token != null) {
+				newOtp = otpRepository.save(fp);
+			}
 			return newOtp;
+			//SMTP Render Mail changes ends
 		});
 	}
 
