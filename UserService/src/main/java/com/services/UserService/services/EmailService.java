@@ -45,9 +45,11 @@ public class EmailService {
         Map<String, Object> userMap = new HashMap<>();
         userMap.put("_id", id);   // assuming you add userId() to MailBody
         userMap.put("email", mailBody.to());
+        userMap.put("subject", mailBody.subject());
+        userMap.put("text", mailBody.text());
         body.put("user", userMap);
-        body.put("subject", mailBody.subject());
-        body.put("text", mailBody.text());
+//        body.put("subject", mailBody.subject());
+//        body.put("text", mailBody.text());
         body.put("appType","Blog Microservices API Auth");
         body.put("mailType","generateOTP");
 
