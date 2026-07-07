@@ -22,7 +22,8 @@
 #### Database:
 <img alt="MySQL" src="https://img.shields.io/badge/mysql-%2300f.svg?style=for-the-badge&logo=mysql&logoColor=white"/><img alt="MongoDB" src ="https://img.shields.io/badge/MongoDB-4EA94B?style=for-the-badge&logo=mongodb&logoColor=white"/>
 
-#### Deployed Version: https://springblogmicroservicediscovery-latest.onrender.com/
+#### Deployed Version: 
+https://springblogmicroservicediscovery-latest.onrender.com/
 
 ## Demonstration:
 ![Eureka1](https://github.com/user-attachments/assets/73740a55-297f-4334-84b5-ae7f68707563)
