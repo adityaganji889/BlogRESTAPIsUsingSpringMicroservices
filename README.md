@@ -18,8 +18,11 @@
 
 #### Back-End:
 <img alt="Spring-Boot" src="https://img.shields.io/badge/Spring-6DB33F?style=for-the-badge&logo=Spring-Boot&logoColor=white"/> <img alt="Hibernate" src="https://img.shields.io/badge/Hibernate-59666C?style=for-the-badge&logo=Hibernate&logoColor=white"/> <img alt="Swagger UI" src ="https://img.shields.io/badge/-Swagger-%23Clojure?style=for-the-badge&logo=swagger&logoColor=white"/> <img alt="JWT" src ="https://img.shields.io/badge/JWT-red?style=for-the-badge&logo=JSON+Web+Tokens&logoColor=white"/> 
+
 #### Database:
 <img alt="MySQL" src="https://img.shields.io/badge/mysql-%2300f.svg?style=for-the-badge&logo=mysql&logoColor=white"/><img alt="MongoDB" src ="https://img.shields.io/badge/MongoDB-4EA94B?style=for-the-badge&logo=mongodb&logoColor=white"/>
+
+#### Deployed Version: https://springblogmicroservicediscovery-latest.onrender.com/
 
 ## Demonstration:
 ![Eureka1](https://github.com/user-attachments/assets/73740a55-297f-4334-84b5-ae7f68707563)
