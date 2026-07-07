@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -56,9 +57,11 @@ public class BlogController {
 	private BlogService blogService;
 
 	@Autowired
+    @Qualifier("normalRestTemplate")
 	private RestTemplate restTemplate;
 
 	public HttpEntity<String> authorizeHeaders(String authorizedHeader) {
+		System.out.println("Authorization passed = " + authorizedHeader);
 		HttpHeaders headers = new HttpHeaders();
 		headers.set("Authorization", authorizedHeader);
 		HttpEntity<String> entity = new HttpEntity<>(headers);
@@ -71,8 +74,10 @@ public class BlogController {
 			try {
 				userInfoResponse = restTemplate.exchange("https://springblogmicroserviceuser-latest.onrender.com/api/userProfile/userDetails", HttpMethod.GET,
 						entity, UserInfoResponse.class).getBody();
+				System.out.println(userInfoResponse);
 			} catch (Exception e) {
-				e.printStackTrace();
+				System.out.println("Error while trying to fetch from user service:"+e.getMessage());
+//				e.printStackTrace();
 			}
 			return userInfoResponse;
 		});
@@ -100,6 +105,7 @@ public class BlogController {
 	@GetMapping("/getAllBlogs")
 	public ResponseEntity<BlogsListResponseDTO> getAllBlogs(
 			@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) @Parameter(hidden = true) String authorizationHeader) {
+		System.out.println("Controller Authorization = " + authorizationHeader);
 		HttpEntity<String> entity = authorizeHeaders(authorizationHeader);
 		CompletableFuture<List<Blog>> blogsList = blogService.getAllBlogs();
 		List<Blog> blogs = null;

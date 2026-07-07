@@ -21,6 +21,7 @@ public class BlogServiceApplication {
 
 		bean.setPreferIpAddress(false);
 		bean.setHostname("springblogmicroserviceblog-latest.onrender.com");
+//		bean.setHostname("localhost:8082");
 
 		return bean;
 	}
