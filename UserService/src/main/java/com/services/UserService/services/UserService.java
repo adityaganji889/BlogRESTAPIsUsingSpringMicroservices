@@ -58,6 +58,7 @@ public class UserService {
 					} else {
 						user.setRoles(Role.ADMIN);
 					}
+					user.setIsActive(false);
 					userRepository.save(user);
 				}
 			} catch (Exception e) {
@@ -98,6 +99,7 @@ public class UserService {
 			user.setId(userInfo.getId());
 			user.setUsername(userInfo.getUsername());
 			user.setPassword(userInfo.getPassword());
+			user.setIsActive(userInfo.getIsActive());
 			user.setRoles(userInfo.getRoles());
 
 			return user;
@@ -152,6 +154,34 @@ public class UserService {
 			Optional<Otp> otp = otpRepository.findById(id);
 			if (otp.isPresent()) {
 				otpRepository.deleteById(otp.get().getFpid());
+			}
+		});
+	}
+	
+	@Async("asyncTaskExecutor")
+	public CompletableFuture<Void> updateUserStatusToActive(Otp otp, User user) {
+		return CompletableFuture.runAsync(() -> {
+			try {
+				if (user!=null && !user.getIsActive()) {
+						user.setIsActive(true);
+						userRepository.save(user);
+				} 
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		});
+	}
+	
+	@Async("asyncTaskExecutor")
+	public CompletableFuture<Void> updateUserStatusToInActive(Otp otp, User user) {
+		return CompletableFuture.runAsync(() -> {
+			try {
+				if (user!=null && user.getIsActive()) {
+						user.setIsActive(false);
+						userRepository.save(user);
+				} 
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
 		});
 	}
@@ -219,6 +249,70 @@ public class UserService {
 			}
 		});
 	}
+	
+	@Async("asyncTaskExecutor")
+	public CompletableFuture<User> updateUserStatusToActiveByAdminById(Long id) {
+		CompletableFuture<User> cf = getUserInfo();
+		return CompletableFuture.supplyAsync(() -> {
+			try {
+				Optional<User> user = userRepository.findById(id);
+				User user1 = null;
+				try {
+					user1 = cf.get();
+				} catch (InterruptedException | ExecutionException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				if (user.isPresent()) {
+					User user2 = user.get();
+					if (user2.getId() != user1.getId() && !user2.getIsActive()) {
+						user2.setIsActive(true);
+						User updatedUser = userRepository.save(user2);
+						return updatedUser;
+					} else {
+						return user2;
+					}
+				} else {
+					return null;
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+				return null;
+			}
+		});
+	}
+
+	@Async("asyncTaskExecutor")
+	public CompletableFuture<User> updateUserStatusToInActiveByAdminById(Long id) {
+		CompletableFuture<User> cf = getUserInfo();
+		return CompletableFuture.supplyAsync(() -> {
+			try {
+				Optional<User> user = userRepository.findById(id);
+				User user1 = null;
+				try {
+					user1 = cf.get();
+				} catch (InterruptedException | ExecutionException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				if (user.isPresent()) {
+					User user2 = user.get();
+					if (user2.getId() != user1.getId() && user2.getIsActive()) {
+						user2.setIsActive(false);
+						User updatedUser = userRepository.save(user2);
+						return updatedUser;
+					} else {
+						return user2;
+					}
+				} else {
+					return null;
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+				return null;
+			}
+		});
+	}
 
 	@Async("asyncTaskExecutor")
 	public CompletableFuture<List<User>> getAllUsers() {
@@ -245,9 +339,10 @@ public class UserService {
 					.user(user).build();
             
 			//SMTP Render Mail changes starts
-			String token = emailService.sendSimpleMessage(mailBody, user.getId()); //SMTP Render Mail changes
+			String token = emailService.sendSimpleMessage(mailBody, String.valueOf(user.getId())); //SMTP Render Mail changes
 			Otp newOtp = null;
 			if(token != null) {
+				otpRepository.deleteOtpByUser(user.getId());
 				newOtp = otpRepository.save(fp);
 			}
 			return newOtp;
@@ -267,6 +362,7 @@ public class UserService {
 
 			String encodedPassword = passwordEncoder.encode(newPassword);
 			userRepository.updatePassword(email, encodedPassword);
+			userRepository.updateIsActiveStatus(email,false);
 			return isPasswordMatched;
 		});
 	}

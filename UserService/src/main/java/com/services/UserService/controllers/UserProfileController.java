@@ -71,6 +71,7 @@ public class UserProfileController {
 	            UserInfo userInfo = new UserInfo();
 	            userInfo.setId(user.getId());
 	            userInfo.setUsername(user.getUsername());
+	            userInfo.setIsActive(user.getIsActive());
 	            userInfo.setRole(user.getRoles());
 	            userInfoResponse.setSuccess(true);
 	            userInfoResponse.setMessage("User info fetched successfully.");
@@ -116,6 +117,7 @@ public class UserProfileController {
 			UserInfo userInfo = new UserInfo();
 			userInfo.setId(user.getId());
 			userInfo.setUsername(user.getUsername());
+		    userInfo.setIsActive(user.getIsActive());
 			userInfo.setRole(user.getRoles());
 			userInfoResponse.setSuccess(true);
 			userInfoResponse.setMessage("User info with id: " + id + " fetched successfully.");

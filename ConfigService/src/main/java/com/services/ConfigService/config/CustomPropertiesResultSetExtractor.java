@@ -24,7 +24,16 @@ public class CustomPropertiesResultSetExtractor implements ResultSetExtractor<Li
             // Construct Property object based on your DB schema
             Property property = new Property();
 //            property.setKey(rs.getString("application"));
-            String arr[] = rs.getString("value").split("=");
+//            String arr[] = rs.getString("value").split("=");
+            String value = rs.getString("value");
+            if (value == null || !value.contains("=")) {
+                continue; // skip bad data
+            }
+
+            String[] arr = value.split("=", 2); // IMPORTANT
+            
+//            System.out.println("Array is:"+arr);
+
             property.setKey(arr[0]);
             property.setValue(arr[1]);
             // Set other fields as necessary

@@ -1,0 +1,32 @@
+server:
+  port: ${PORT:8081}
+spring:
+  profiles:
+    active: user
+  application:
+    name: USER-SERVICE
+  datasource:
+    url: ${MYSQL_DB_CONN_STRING}
+    username: ${MYSQL_DB_HOST_NAME}
+    password: ${MYSQL_DB_PASSWORD}
+  config:
+    import: "optional:configserver:"
+  cloud:
+    config:
+      discovery:
+        enabled: true
+        service-id: CONFIG-SERVICE
+  jpa:
+    hibernate:
+      ddl-auto: update
+ 
+springdoc:
+  api-docs:
+      path: /v3/api-docs
+  swagger-ui:
+      path: /swagger-ui.html
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL}

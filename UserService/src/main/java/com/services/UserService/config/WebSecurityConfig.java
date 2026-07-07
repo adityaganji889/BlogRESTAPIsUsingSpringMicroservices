@@ -1,5 +1,7 @@
 package com.services.UserService.config;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,9 +31,13 @@ public class WebSecurityConfig {
 		http.csrf(AbstractHttpConfigurer::disable).cors(cors -> cors.configurationSource(request -> {
 			CorsConfiguration config = new CorsConfiguration();
 			config.setAllowCredentials(true);
-			config.addAllowedOrigin("*"); // Adjust as needed
-			config.addAllowedHeader("*");
-			config.addAllowedMethod("*");
+//			config.setAllowedOrigins(List.of("*"));
+			config.setAllowedOriginPatterns(List.of("*"));
+			config.setAllowedHeaders(List.of("*"));
+			config.setAllowedMethods(List.of("*"));
+//			config.addAllowedOrigin("*"); // Adjust as needed
+//			config.addAllowedHeader("*");
+//			config.addAllowedMethod("*");
 			return config;
 		})).sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS) // Set session to stateless

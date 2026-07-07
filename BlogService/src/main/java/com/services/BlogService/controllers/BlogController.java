@@ -69,7 +69,7 @@ public class BlogController {
 		return CompletableFuture.supplyAsync(() -> {
 			UserInfoResponse userInfoResponse = new UserInfoResponse();
 			try {
-				userInfoResponse = restTemplate.exchange("http://USER-SERVICE/api/userProfile/userDetails", HttpMethod.GET,
+				userInfoResponse = restTemplate.exchange("https://springblogmicroserviceuser-latest.onrender.com/api/userProfile/userDetails", HttpMethod.GET,
 						entity, UserInfoResponse.class).getBody();
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -82,7 +82,7 @@ public class BlogController {
 		return CompletableFuture.supplyAsync(() -> {
 			UserInfoResponse userInfoResponse = new UserInfoResponse();
 			try {
-				userInfoResponse = restTemplate.exchange("http://USER-SERVICE/api/userProfile/userDetails/" + id,
+				userInfoResponse = restTemplate.exchange("https://springblogmicroserviceuser-latest.onrender.com/api/userProfile/userDetails/" + id,
 						HttpMethod.GET, entity, UserInfoResponse.class).getBody();
 			} catch (Exception e) {
 				e.printStackTrace();

@@ -1,0 +1,60 @@
+server:
+  port: ${PORT:9090}
+
+spring:
+  application:
+    name: API-GATEWAY
+  main:
+    web-application-type: reactive
+  cloud:
+    gateway:
+      routes:
+        - id: USER-SERVICE
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/api/users/**,/api/userProfile/**,/api/admin/**
+          filters:
+            - JwtHeaderFilter
+        - id: BLOG-SERVICE
+          uri: lb://BLOG-SERVICE
+          predicates:
+            - Path=/api/blogs/**
+          filters:
+            - JwtHeaderFilter
+        # Swagger route for USER-SERVICE
+        - id: USER-SERVICE-DOCS
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/user/v3/api-docs/**
+          filters:
+            - RewritePath=/user/(?<segment>.*), /$\{segment}
+        # Swagger route for BLOG-SERVICE
+        - id: BLOG-SERVICE-DOCS
+          uri: lb://BLOG-SERVICE
+          predicates:
+            - Path=/blog/v3/api-docs/**
+          filters:
+            - RewritePath=/blog/(?<segment>.*), /$\{segment}
+#springdoc:
+#    api-docs:
+#      path: /v3/api-docs
+#    swagger-ui:
+#      path: /swagger-ui.html
+springdoc:
+  swagger-ui:
+    urls:
+      - name: USER-SERVICE
+        url: /user/v3/api-docs
+      - name: BLOG-SERVICE
+        url: /blog/v3/api-docs
+    urlsPrimaryName: USER-SERVICE
+eureka:
+  instance:
+    prefer-ip-address: false
+    lease-renewal-interval-in-seconds: ${Microservice heart rate}
+    lease-expiration-duration-in-seconds: ${Microservice end time when no response}
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL}
+    register-with-eureka: true
+    fetch-registry: true

@@ -3,6 +3,8 @@ package com.services.UserService.services;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -18,16 +20,17 @@ import com.services.UserService.dtos.MailBody;
 public class EmailService {
 
     private final JavaMailSender javaMailSender;
-    private final RestTemplate restTemplate;
     private final String emailApiUrl = "https://mail-sender-helper-api.vercel.app/api/users/generateOTPVerifyMail"; // Replace with actual API
 
-
-    public EmailService(JavaMailSender javaMailSender, RestTemplate restTemplate) {
+    @Autowired
+    @Qualifier("ExternalRestTemplate")
+    private RestTemplate restTemplate;
+    
+    public EmailService(JavaMailSender javaMailSender) {
         this.javaMailSender = javaMailSender;
-        this.restTemplate = restTemplate;
     }
 
-    public String sendSimpleMessage(MailBody mailBody, Long id) {
+    public String sendSimpleMessage(MailBody mailBody, String id) {
 //        SimpleMailMessage message = new SimpleMailMessage();
 //        message.setTo(mailBody.to());
 //        message.setFrom("adityaganji889@gmail.com");

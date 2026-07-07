@@ -1,0 +1,26 @@
+server:
+  port: ${PORT:8083}
+
+spring:
+  application:
+    name: CONFIG-SERVICE
+  cloud:
+    config:
+      server:
+        jdbc:
+          enabled: true
+          sql: SELECT `application`,`value` FROM `properties` WHERE `application` = ? AND `profile` = ? AND `label` = ?
+        bootstrap: false
+  datasource:
+    url: ${MYSQL_DB_CONN_STRING} 
+    username: ${MYSQL_DB_HOST_NAME}
+    password: ${MYSQL_DB_HOST_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+eureka:
+  client:
+   service-url:
+      defaultZone: ${EUREKA_URL}

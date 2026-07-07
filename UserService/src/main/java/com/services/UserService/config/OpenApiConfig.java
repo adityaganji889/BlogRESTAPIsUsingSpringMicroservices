@@ -31,9 +31,13 @@ import io.swagger.v3.oas.annotations.servers.Server;
 	),
     servers = {
     	@Server(
-    		description = "Local Env",
-    		url = "http://localhost:8081"
-    	)// similar add another entry of Server for Prod Env.	
+    		description = "Live Env",
+        	url = "https://springblogmicroserviceuser-latest.onrender.com"	
+    	), // similar add another entry of Server for Prod Env.
+    	@Server(
+        		description = "Local Env",
+        		url = "http://localhost:8081"
+        )
     }
 )
 @SecurityScheme(

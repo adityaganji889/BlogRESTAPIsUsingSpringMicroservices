@@ -72,6 +72,7 @@ public class UserController {
             registeredResponse.setSuccess(true);
             registeredResponse.setMessage("User registered successfully");
             registeredResponse.setUsername(request.getUsername());
+            registeredResponse.setIsActive(false);
             registeredResponse.setRole(request.getRole());
             return ResponseEntity.ok(registeredResponse);
     }
@@ -101,13 +102,20 @@ public class UserController {
             	Optional<User> userp = cfu.get();
                 if (userp.isPresent()) {
                     User user = userp.get();
-                    if (user != null && userService.getPasswordEncoder().matches(request.getPassword(), user.getPassword())) {
+                    if (user != null && userService.getPasswordEncoder().matches(request.getPassword(), user.getPassword()) && user.getIsActive()) {
                         String token = jwtUtil.generateToken(user);
                         loggedInResponse.setToken(token);
                         loggedInResponse.setMessage("You logged in successfully.");
                         loggedInResponse.setSuccess(true);
                         loggedInResponse.setUsername(request.getUsername());
                         return ResponseEntity.ok(loggedInResponse);
+                    }
+                    else if(user != null && !user.getIsActive()) {
+                    	loggedInResponse.setToken(null);
+                        loggedInResponse.setMessage("Your username is not active yet.");
+                        loggedInResponse.setSuccess(false);
+                        loggedInResponse.setUsername(request.getUsername());
+                    	return ResponseEntity.ok(loggedInResponse);
                     }
                 }
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
@@ -211,6 +219,7 @@ public class UserController {
                 return new ResponseEntity<DefaultResponse>(new DefaultResponse(false, "OTP Has Expired"),HttpStatus.EXPECTATION_FAILED);
             }
             
+            userService.updateUserStatusToActive(otp.get(),user.get());
             userService.deleteOtpById(otp.get().getFpid());
             return ResponseEntity.ok(new DefaultResponse(true,"OTP verified for email: "+ user.get().getUsername()+" successfully."));	
         }
@@ -250,7 +259,7 @@ public class UserController {
         	new ResponseEntity<>(new DefaultResponse(false, e.getMessage()),HttpStatus.INTERNAL_SERVER_ERROR);
         }
         if(flag) {
-        	return ResponseEntity.ok(new DefaultResponse(true,"Password is resetted for email: "+email+" successfully."));
+        	return ResponseEntity.ok(new DefaultResponse(true,"Password is resetted for email: "+email+" successfully. Please verify your email once more."));
         }
         else {
         	return new ResponseEntity<DefaultResponse>(new DefaultResponse(false,"Please enter the password again!"), HttpStatus.EXPECTATION_FAILED);

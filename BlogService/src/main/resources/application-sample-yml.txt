@@ -1,0 +1,28 @@
+server:
+  port: ${PORT:8082}
+spring:
+  profiles:
+    active: blog
+  application:
+    name: BLOG-SERVICE
+  data:
+    mongodb:
+       uri: ${MONGO_DB_CONN_STRING}
+  config:
+    import: "optional:configserver:"
+  cloud:
+    config:
+       discovery:
+            enabled: true
+            service-id: CONFIG-SERVICE
+    
+springdoc:
+  api-docs:
+      path: /v3/api-docs
+  swagger-ui:
+      path: /swagger-ui.html
+
+eureka:
+   client:
+    service-url:
+      defaultZone: ${EUREKA_URL}

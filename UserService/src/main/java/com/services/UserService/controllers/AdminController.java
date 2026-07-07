@@ -281,6 +281,156 @@ public class AdminController {
 			}
 	}
 	
+	@SuppressWarnings("unused")
+	@Operation(
+			summary = "Update user isActive to True",
+			description = "Updates the active status of a user to active user. Accessible only by admin.",
+			parameters = {
+				@Parameter(name = "id", description = "ID of the user to update", required = true)
+			},
+			responses = {
+				@ApiResponse(responseCode = "200", description = "User active status updated to active user successfully",
+					content = @Content(schema = @Schema(implementation = UserInfoResponse.class))),
+				@ApiResponse(responseCode = "401", description = "Unauthorized - Invalid token", content = @Content),
+				@ApiResponse(responseCode = "403", description = "Forbidden - Not an admin user", content = @Content),
+				@ApiResponse(responseCode = "404", description = "User not found or already an active user", content = @Content)
+			}
+		)
+	@PutMapping("/updateUserStatusActiveByAdmin/{id}")
+	public ResponseEntity<UserInfoResponse> updateUserStatusActiveByAdminById(
+			@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) @Parameter(hidden = true) String authorizationHeader,
+			@PathVariable("id") Long id) {
+			UserInfoResponse userInfoResponse = new UserInfoResponse();
+			try {
+				UserInfo userInfo = new UserInfo();
+				String username = loggedInUsername.getUsernameFromLoggedInToken(authorizationHeader);
+				if (username.equals("Invalid Token")) {
+					return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+				}
+				CompletableFuture<User> cfu = userService.getUserInfoById(id);
+				User user = cfu.get();
+				Role role = user.getRoles();
+				CompletableFuture<User> cfu1 = userService.getUserInfo();
+				User user1 = cfu1.get();
+				if (user != null) {
+					User updatedUser = null;
+					if(user1.getRoles().equals(Role.ADMIN)) {
+						 CompletableFuture<User> cfu2 = userService.updateUserStatusToActiveByAdminById(id);
+						 updatedUser = cfu2.get();
+					} else {
+						userInfoResponse.setSuccess(false);
+						userInfoResponse.setMessage("You're not an Admin User, trying to update other user role to User.");
+						return new ResponseEntity<UserInfoResponse>(userInfoResponse, HttpStatus.FORBIDDEN);
+					}
+					if(updatedUser != null && updatedUser.getIsActive()) {
+						userInfo.setId(updatedUser.getId());
+						userInfo.setUsername(updatedUser.getUsername());
+						userInfo.setIsActive(updatedUser.getIsActive());
+						userInfo.setRole(updatedUser.getRoles());
+						userInfoResponse.setSuccess(true);
+						userInfoResponse.setMessage("Active status of User with id: " + id + " is updated successfully.");
+						userInfoResponse.setUserInfo(userInfo);
+						return new ResponseEntity<UserInfoResponse>(userInfoResponse, HttpStatus.OK);
+					} else {
+						userInfo.setId(user.getId());
+						userInfo.setUsername(user.getUsername());
+						userInfo.setIsActive(true);
+						userInfo.setRole(user.getRoles());
+						userInfoResponse.setSuccess(false);
+						userInfoResponse.setMessage("User with id: "+ id + " is already an active user.");
+						userInfoResponse.setUserInfo(userInfo);
+						return new ResponseEntity<UserInfoResponse>(userInfoResponse, HttpStatus.NOT_FOUND);
+					}
+				} else {
+					userInfoResponse.setSuccess(false);
+					userInfoResponse.setMessage("User not found.");
+					userInfoResponse.setUserInfo(null);
+					return new ResponseEntity<UserInfoResponse>(userInfoResponse, HttpStatus.NOT_FOUND);
+				}
+			}
+			catch(Exception e) {
+				userInfoResponse.setSuccess(false);
+				userInfoResponse.setMessage(e.getMessage());
+				userInfoResponse.setUserInfo(null);
+				return new ResponseEntity<UserInfoResponse>(userInfoResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+			}
+	}
+	
+	@SuppressWarnings("unused")
+	@Operation(
+			summary = "Update user isActive to False",
+			description = "Updates the active status of a user to inactive user. Accessible only by admin.",
+			parameters = {
+				@Parameter(name = "id", description = "ID of the user to update", required = true)
+			},
+			responses = {
+				@ApiResponse(responseCode = "200", description = "User active status updated to inactive user successfully",
+					content = @Content(schema = @Schema(implementation = UserInfoResponse.class))),
+				@ApiResponse(responseCode = "401", description = "Unauthorized - Invalid token", content = @Content),
+				@ApiResponse(responseCode = "403", description = "Forbidden - Not an admin user", content = @Content),
+				@ApiResponse(responseCode = "404", description = "User not found or already an inactive user", content = @Content)
+			}
+		)
+	@PutMapping("/updateUserStatusInActiveByAdmin/{id}")
+	public ResponseEntity<UserInfoResponse> updateUserStatusInActiveByAdminById(
+			@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) @Parameter(hidden = true) String authorizationHeader,
+			@PathVariable("id") Long id) {
+			UserInfoResponse userInfoResponse = new UserInfoResponse();
+			try {
+				UserInfo userInfo = new UserInfo();
+				String username = loggedInUsername.getUsernameFromLoggedInToken(authorizationHeader);
+				if (username.equals("Invalid Token")) {
+					return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+				}
+				CompletableFuture<User> cfu = userService.getUserInfoById(id);
+				User user = cfu.get();
+				Role role = user.getRoles();
+				CompletableFuture<User> cfu1 = userService.getUserInfo();
+				User user1 = cfu1.get();
+				if (user != null) {
+					User updatedUser = null;
+					if(user1.getRoles().equals(Role.ADMIN)) {
+						 CompletableFuture<User> cfu2 = userService.updateUserStatusToInActiveByAdminById(id);
+						 updatedUser = cfu2.get();
+					} else {
+						userInfoResponse.setSuccess(false);
+						userInfoResponse.setMessage("You're not an Admin User, trying to update other user role to User.");
+						return new ResponseEntity<UserInfoResponse>(userInfoResponse, HttpStatus.FORBIDDEN);
+					}
+					if(updatedUser != null && !updatedUser.getIsActive()) {
+						userInfo.setId(updatedUser.getId());
+						userInfo.setUsername(updatedUser.getUsername());
+						userInfo.setIsActive(updatedUser.getIsActive());
+						userInfo.setRole(updatedUser.getRoles());
+						userInfoResponse.setSuccess(true);
+						userInfoResponse.setMessage("Active status of User with id: " + id + " is updated successfully.");
+						userInfoResponse.setUserInfo(userInfo);
+						return new ResponseEntity<UserInfoResponse>(userInfoResponse, HttpStatus.OK);
+					} else {
+						userInfo.setId(user.getId());
+						userInfo.setUsername(user.getUsername());
+						userInfo.setIsActive(false);
+						userInfo.setRole(user.getRoles());
+						userInfoResponse.setSuccess(false);
+						userInfoResponse.setMessage("User with id: "+ id + " is already an inactive user.");
+						userInfoResponse.setUserInfo(userInfo);
+						return new ResponseEntity<UserInfoResponse>(userInfoResponse, HttpStatus.NOT_FOUND);
+					}
+				} else {
+					userInfoResponse.setSuccess(false);
+					userInfoResponse.setMessage("User not found.");
+					userInfoResponse.setUserInfo(null);
+					return new ResponseEntity<UserInfoResponse>(userInfoResponse, HttpStatus.NOT_FOUND);
+				}
+			}
+			catch(Exception e) {
+				userInfoResponse.setSuccess(false);
+				userInfoResponse.setMessage(e.getMessage());
+				userInfoResponse.setUserInfo(null);
+				return new ResponseEntity<UserInfoResponse>(userInfoResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+			}
+	}
+	
 	@Operation(
 			summary = "Delete user by ID",
 			description = "Deletes a user from the system by ID. Accessible only by admin.",

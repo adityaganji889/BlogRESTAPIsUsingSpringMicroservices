@@ -18,6 +18,7 @@ public class RegisteredResponse {
 	private Boolean success;
     private String message;
     private String username;
+    private Boolean isActive;
     private Role role;
     
 }

@@ -23,6 +23,9 @@ public class User {
     
     @Column(name="password",nullable=false)
     private String password;
+    
+    @Column(name="isActive",nullable=false)
+    private Boolean isActive;
 
     @Enumerated(EnumType.STRING)
     private Role roles; // Use Role enum

@@ -24,10 +24,14 @@ import io.swagger.v3.oas.annotations.servers.Server;
 			  termsOfService = "Terms of service"
 			),
 		    servers = {
+			    @Server(
+			        		description = "Live Env",
+			            	url = "https://springblogmicroserviceblog-latest.onrender.com"	
+			    ), // similar add another entry of Server for Prod Env.
 		    	@Server(
 		    		description = "Local Env",
 		    		url = "http://localhost:8082"
-		    	)// similar add another entry of Server for Prod Env.	
+		    	)	
 		    },
 		  security = {
 			    	@SecurityRequirement(

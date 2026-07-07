@@ -17,6 +17,7 @@ public class UserInfo {
 
 	private Long id;
 	private String username;
+	private Boolean isActive;
 	private Role role;
 
 }
