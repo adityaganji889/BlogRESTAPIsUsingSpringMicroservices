@@ -366,7 +366,14 @@ Blog -. Logical Reference .-> User
 <img alt="MySQL" src="https://img.shields.io/badge/mysql-%2300f.svg?style=for-the-badge&logo=mysql&logoColor=white"/><img alt="MongoDB" src ="https://img.shields.io/badge/MongoDB-4EA94B?style=for-the-badge&logo=mongodb&logoColor=white"/>
 
 #### Deployed Version: 
+
+##### Eureka Discovery Service:
+
 https://springblogmicroservicediscovery-latest.onrender.com/
+
+##### API Gateway Service:
+
+https://springblogmicroserviceapigateway-latest.onrender.com/webjars/swagger-ui/index.html
 
 ## Demonstration:
 ![Eureka1](https://github.com/user-attachments/assets/73740a55-297f-4334-84b5-ae7f68707563)
